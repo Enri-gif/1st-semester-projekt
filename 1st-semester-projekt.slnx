@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/Api/Api.csproj" />
+  </Folder>
+  <Folder Name="/blazor/">
+    <Project Path="blazor/blazor/blazor.csproj" />
+  </Folder>
+</Solution>
