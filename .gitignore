@@ -53,4 +53,13 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 
+# Ignore VS folder with local stuff
 .vs/
+
+# Ignore build output stuff, tied to VS also (can mess up pushing and pulling for other devs)
+**/bin/
+**/obj/
+
+# These are user-specific project settings and session-specific IDE stuff from VS
+*.user
+*.suo
