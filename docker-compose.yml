@@ -1,0 +1,30 @@
+# Usage
+# Start from CLI with:
+# docker compose up -d
+
+# Stop it from CLI with:
+# docker compose down
+
+# Full reset from CLI (deletes volume):
+# docker compose down -v
+
+version: "3.9"
+
+services:
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: 1-Semester-MSSQL-DB
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Th3_Stronkest_Paeswourt"
+      MSSQL_MEMORY_LIMIT_MB: 1024 # Optional memory usage limit
+    ports:
+      - "1433:1433"
+    volumes: # For persistent storage
+      - sql-data:/var/opt/mssql
+
+volumes:
+  sql-data:
+  
