@@ -1,0 +1,56 @@
+@page "/teacher-dashboard"
+
+<h3>Lærer Dashboard</h3>
+
+<div class="dashboard-buttons">
+
+    <button class="btn btn-primary" @onclick="GoToAddStudent">Tilføj elev</button>
+
+    <button class="btn btn-primary" @onclick="GoToAddAssignment">Tilføj opgave</button>
+
+    <button class="btn btn-primary" @onclick="GoToCreateAssignmentSet">Lav opgavesæt</button>
+
+    <button class="btn btn-primary" @onclick="GoToAssignmentSetOverview">Opgavesæt oversigt</button>
+
+    <button class="btn btn-primary" @onclick="GoToEditAssignmentSet">Ret opgavesæt</button>
+
+    <button class="btn btn-primary" @onclick="GoToUploadVideo">Upload video</button>
+
+    <button class="btn btn-primary" @onclick="GoToGenerateDiagram">Generer diagram</button>
+
+</div>
+@code{
+
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
+
+    private void GoToAddStudent()
+    {
+        Navigation.NavigateTo("/add-student");
+    }
+    private void GoToAddAssignment()
+    {
+        Navigation.NavigateTo("/add-assignment");
+    }
+    private void GoToCreateAssignmentSet()
+    {
+        Navigation.NavigateTo("/create-assignment-set");
+    }
+    private void GoToAssignmentSetOverview()
+    {
+        Navigation.NavigateTo("/assignment-set-overview");
+    }
+    private void GoToEditAssignmentSet()
+    {
+        Navigation.NavigateTo("/edit-assignment-set");
+    }
+    private void GoToUploadVideo()
+    {
+        Navigation.NavigateTo("/upload-video");
+    }
+    private void GoToGenerateDiagram()
+    {
+        Navigation.NavigateTo("/generate-diagram");
+    }
+
+}
