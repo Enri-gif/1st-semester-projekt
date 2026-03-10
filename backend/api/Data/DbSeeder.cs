@@ -4,17 +4,17 @@ namespace api.Data;
 
 public class DbSeeder
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceProvider serviceProvider;
 
     public DbSeeder (IServiceProvider serviceProvider)
     {
-        _serviceProvider = serviceProvider;
+        this.serviceProvider = serviceProvider;
     }
 
     public async Task SeedAsync ()
     {
-        var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>> ();
-        var userManager = _serviceProvider.GetRequiredService<UserManager<ApplicationUser>> ();
+        var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>> ();
+        var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>> ();
 
         string[] roles = { "Admin", "Teacher", "Student" };
         foreach (var role in roles)
