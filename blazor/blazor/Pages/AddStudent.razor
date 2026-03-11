@@ -1,0 +1,71 @@
+@page "/add-student"
+@inject HttpClient Http
+
+<h3>Opret elev</h3>
+
+<div class="form-container">
+
+    <label>Fornavn</label>
+    <input class="form-control" @bind="FirstName" />
+
+    <label>Efternavn</label>
+    <input class="form-control" @bind="LastName" />
+
+    <label>Email</label>
+    <input class="form-control" @bind="Email" />
+
+    <select class="form-control" @bind="SelectedClass">
+    <option value="">-- Vælg hold --</option>
+
+    @foreach (var c in Classes)
+    {
+        <option value="@c">@c</option>
+    }
+
+    </select>
+
+    <button class="btn btn-success" @onclick="CreateStudent">
+        Opret elev
+    </button>
+
+</div>
+
+@code {
+
+    private string FirstName = "";
+    private string LastName = "";
+    private string Email = "";
+    private string SelectedClass = "";
+
+    private async Task CreateStudent()
+    {
+        var student = new
+        {
+            firstName = FirstName,
+            lastName = LastName,
+            email = Email,
+            studentClass = SelectedClass
+        };
+
+        var response = await Http.PostAsJsonAsync("api/students", student);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("Elev oprettet!");
+        }
+        else
+        {
+            Console.WriteLine("Fejl ved oprettelse af elev.");
+        }
+    }
+
+    private List<string> Classes = new()
+    {
+        "1A",
+        "1B",
+        "2A",
+        "3A"
+    };
+
+}
+
