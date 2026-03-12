@@ -1,10 +1,37 @@
+using api.Data;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddDbContext<ApplicationDbContext> (options =>
+    options.UseSqlServer (builder.Configuration.GetConnectionString ("DefaultConnection")));
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole> (options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 6;
+})
+.AddEntityFrameworkStores<ApplicationDbContext> ()
+.AddDefaultTokenProviders ();
+
+//builder.Services.AddScoped<DbSeeder> (); // Only required for when seeding below
+
+//builder.Services.AddRazorPages ();
+builder.Services.AddServerSideBlazor ();
+
 var app = builder.Build();
+
+// Enable to seed from DbSeeder-class
+//using (var scope = app.Services.CreateScope ())
+//{
+//    var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder> ();
+//    await seeder.SeedAsync ();
+//}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -32,6 +59,9 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+app.UseAuthentication ();
+app.UseAuthorization ();
 
 app.Run();
 
