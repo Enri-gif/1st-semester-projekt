@@ -1,4 +1,5 @@
-﻿using api.DTOs;
+﻿using api.Data;
+using api.DTOs;
 using api.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,16 +17,18 @@ public class StudentsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Student>> CreateStudent (CreateStudentDTO dto)
+    public async Task<ActionResult<Student>> CreateStudent ([FromBody] CreateStudentDTO dto)
     {
         var student = new Student
         {
             FirstName = dto.FirstName,
-            LastName = dto.LastName,
+            LastName = dto.LastName
         };
 
         dbContext.Students.Add (student);
         await dbContext.SaveChangesAsync ();
+
+        Console.WriteLine ($"Succesfully created student {student.FirstName}.");
 
         return CreatedAtAction (nameof (GetStudent), new { id = student.Id }, student);
     }
@@ -36,7 +39,12 @@ public class StudentsController : ControllerBase
         var student = await dbContext.Students.FindAsync (id);
 
         if (student == null)
+        {
+            Console.WriteLine ($"Controller found no student for id {id}.");
             return NotFound ();
+        }
+
+        Console.WriteLine ($"Controller found a student for id {id}.");
 
         return student;
     }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using api.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace api.Data;
@@ -10,4 +11,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
 
     }
+
+    public DbSet<Student> Students { get; set; }
 }

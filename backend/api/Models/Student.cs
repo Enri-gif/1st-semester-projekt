@@ -8,5 +8,5 @@ public class Student
 
     public string LastName { get; set; } = default!;
 
-    public string Email { get; set; } = default!;
+    public string? Email { get; set; }
 }
