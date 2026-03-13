@@ -1,0 +1,86 @@
+@page "/CreateAssignment"
+@using blazor.models
+@using Microsoft.AspNetCore.Components.Web
+
+<PageTitle>Tilføj Opgave</PageTitle>
+
+<h1>Tilføj Opgave</h1>
+
+<div class="img-div">
+    <div class="drop-box">
+        Drag & drop filer her
+    </div>
+    <div class="img">
+        <button class="img-btn">Find på min computer</button>
+    </div>
+</div>
+
+<div class="input-grid">
+
+    <div class="input-field">
+        <label>Uddannelse</label>
+        <input type="text" @bind="newAssignment.Education" />
+    </div>
+
+    <div class="input-field">
+        <label>Fag</label>
+        <input type="text" @bind="newAssignment.Subject" />
+    </div>
+
+    <div class="input-field">
+        <label>Niveau</label>
+        <input type="text" @bind="newAssignment.Level" />
+    </div>
+
+    <div class="input-field">
+        <label>Årstal</label>
+        <input type="number" @bind="newAssignment.Year" />
+    </div>
+
+    <div class="input-field">
+        <label>Dato</label>
+        <input type="date" @bind="newAssignment.Date" />
+    </div>
+
+    <div class="input-field">
+        <label>Delprøve</label>
+        <input type="text" @bind="newAssignment.Subquestion" />
+    </div>
+
+    <div class="input-field">
+        <label>Emne</label>
+        <input type="text" @bind="newAssignment.Topic" />
+    </div>
+
+    <div class="input-field">
+        <label>Tags</label>
+        <input type="text" placeholder="Skriv tag og tryk Enter" @bind="currentTag" @onkeydown="AddTag" />
+        <div class="tag-container">
+            @foreach (var tag in newAssignment.Tags)
+            {
+                <span class="tag">@tag</span>
+            }
+        </div>
+    </div>
+    <div>
+        <button class="submit" @onclick="SubmitAssignment">Opret</button>
+    </div>
+
+</div>
+
+@code {
+    private Assignment newAssignment = new();
+    private string currentTag = "";
+
+    private void AddTag(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(currentTag))
+        {
+            newAssignment.Tags.Add(currentTag);
+            currentTag = "";
+        }
+    }
+    //api her
+    private void SubmitAssignment(){
+    }
+}
