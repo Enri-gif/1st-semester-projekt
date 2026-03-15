@@ -1,4 +1,5 @@
 using api.Data;
+using api.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddControllers();
 
 builder.Services.AddDbContext<ApplicationDbContext> (options =>
     options.UseSqlServer (builder.Configuration.GetConnectionString ("DefaultConnection")));
@@ -21,8 +24,11 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole> (options =>
 
 //builder.Services.AddScoped<DbSeeder> (); // Only required for when seeding below
 
+//hvorfor?
 //builder.Services.AddRazorPages ();
 builder.Services.AddServerSideBlazor ();
+
+builder.Services.AddScoped<AssignmentService>();
 
 var app = builder.Build();
 
@@ -59,6 +65,8 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+app.MapControllers();
 
 app.UseAuthentication ();
 app.UseAuthorization ();

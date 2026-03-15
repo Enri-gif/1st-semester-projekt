@@ -1,6 +1,22 @@
-@api_HostAddress = http://localhost:5041
+@api_HostAddress = http://localhost:5000
 
-GET {{api_HostAddress}}/weatherforecast/
+GET {{api_HostAddress}}/api/assignment
 Accept: application/json
+
+###
+
+POST {{api_HostAddress}}/api/assignment
+Content-Type: application/json
+
+{
+    "Answer": "postanswer",
+    "Topic": "postTopic",
+    "Subject": "postsubject",
+    "Subtest": 2,
+    "Level": "C",
+    "Subquestion": "postSubquestion",
+    "Points": 10,
+    "Number": 3
+}
 
 ###

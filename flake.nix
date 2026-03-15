@@ -1,7 +1,7 @@
 {
-description = "C# dev flake with isolated LSP";
+    description = "C# dev flake with isolated LSP";
 
-inputs = {
+    inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 };
 
@@ -35,10 +35,15 @@ in
                     dotnet restore
                 fi
 
-                zsh
                 eval "$(dotnet completions script zsh)"
-            '';
-        };
-    };
+
+                if [ -f .config/dotnet-tools.json ]; then
+                    dotnet tool restore
+                fi
+
+                exec zsh
+                '';
+                };
+            };
 }
 
