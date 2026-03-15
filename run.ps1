@@ -1,0 +1,2 @@
+Start-Process dotnet -ArgumentList "watch", "run", "--project", "./backend/api/", "--urls", "http://localhost:5000"
+Start-Process dotnet -ArgumentList "watch", "run", "--project", "./blazor/blazor/", "--urls", "http://localhost:5001"
