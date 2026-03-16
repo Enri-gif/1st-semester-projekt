@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/backend/">
-    <Project Path="backend/api/api.csproj" />
+    <Project Path="backend/Api/Api.csproj" DisplayName="api" />
   </Folder>
   <Folder Name="/blazor/">
     <Project Path="blazor/blazor/blazor.csproj" />

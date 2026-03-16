@@ -28,6 +28,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole> (options =>
 //builder.Services.AddRazorPages ();
 builder.Services.AddServerSideBlazor ();
 
+builder.Services.AddControllers ();
 builder.Services.AddScoped<AssignmentService>();
 
 var app = builder.Build();
@@ -70,6 +71,8 @@ app.MapControllers();
 
 app.UseAuthentication ();
 app.UseAuthorization ();
+
+app.MapControllers ();
 
 app.Run();
 
