@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using api.Models;
 
 namespace api.Data;
 
@@ -10,4 +11,5 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
 
     }
+    public DbSet<Assignment> Assignments { get; set; }
 }
