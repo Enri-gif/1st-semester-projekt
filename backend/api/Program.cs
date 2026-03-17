@@ -1,5 +1,6 @@
 using api.Data;
 using api.Services;
+using Api.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +31,7 @@ builder.Services.AddServerSideBlazor ();
 
 builder.Services.AddControllers ();
 builder.Services.AddScoped<AssignmentService>();
+builder.Services.AddScoped<IStudentService, StudentService> ();
 
 var app = builder.Build();
 
