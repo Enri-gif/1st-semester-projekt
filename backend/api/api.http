@@ -6,17 +6,16 @@ Accept: application/json
 ###
 
 POST {{api_HostAddress}}/api/assignment
-Content-Type: application/json
 
-{
-    "Answer": "postanswer",
-    "Topic": "postTopic",
-    "Subject": "postsubject",
-    "Subtest": 2,
-    "Level": "C",
-    "Subquestion": "postSubquestion",
-    "Points": 10,
-    "Number": 3
-}
+Answer:postanswer
+Topic:postTopic
+Subject:postsubject
+Subtest:2
+Level:C
+Subquestion:postSubquestion
+Points:10
+Number:3
 
+Images: @"./testImg/Sk%C3%A6rmbillede%202026-03-04%20083548.png"
+Images: @"./testImg/Sk%C3%A6rmbillede%202026-03-04%20083714.png"
 ###
