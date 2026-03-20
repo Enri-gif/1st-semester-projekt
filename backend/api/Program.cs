@@ -12,6 +12,16 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddControllers();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevCors", policy =>
+    {
+        policy.AllowAnyHeader()
+              .AllowAnyMethod()
+              .WithOrigins("http://localhost:5001"); // frontend URL
+    });
+});
+
 builder.Services.AddDbContext<ApplicationDbContext> (options =>
     options.UseSqlServer (builder.Configuration.GetConnectionString ("DefaultConnection")));
 
@@ -32,8 +42,10 @@ builder.Services.AddServerSideBlazor ();
 builder.Services.AddControllers ();
 builder.Services.AddScoped<AssignmentService>();
 builder.Services.AddScoped<IStudentService, StudentService> ();
+builder.Services.AddSingleton<MongoAttachmentService>();
 
 var app = builder.Build();
+app.UseCors("DevCors");
 
 // Enable to seed from DbSeeder-class
 //using (var scope = app.Services.CreateScope ())
@@ -73,8 +85,6 @@ app.MapControllers();
 
 app.UseAuthentication ();
 app.UseAuthorization ();
-
-app.MapControllers ();
 
 app.Run();
 

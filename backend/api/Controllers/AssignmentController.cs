@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using api.Models;
 using api.Services;
@@ -10,34 +9,12 @@ namespace api.Controllers
     public class AssignmentController : ControllerBase{
 
         private readonly AssignmentService _service;
+        private readonly MongoAttachmentService _mongoAttachmentService;
 
-        public AssignmentController(AssignmentService service){
+        public AssignmentController(AssignmentService service, MongoAttachmentService mongoAttachmentService){
+            _mongoAttachmentService = mongoAttachmentService;
             _service = service;
         }
-
-        // private static List<Assignment> assignments = new List<Assignment>{
-        //     //test
-        //     new Assignment{
-        //         Answer = "testAnswer",
-        //         Topic = "testTopic",
-        //         Subject = "testSubject",
-        //         Points = 1,
-        //         Level = "A",
-        //         Subtest = 1,
-        //         Number = 1,
-        //         Subquestion = "a"
-        //     },
-        //     new Assignment{
-        //         Answer = "testAnswer2",
-        //         Topic = "testTopic2",
-        //         Subject = "testSubject2",
-        //         Points = 2,
-        //         Level = "B",
-        //         Subtest = 2,
-        //         Number = 2,
-        //         Subquestion = "b"
-        //     }
-        // };
 
         [HttpGet]
         public async Task<ActionResult<List<Assignment>>> GetAssignments(){
@@ -55,12 +32,32 @@ namespace api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Assignment>> CreateAssignment(Assignment newAssignment){
+        public async Task<ActionResult<Assignment>> CreateAssignment([FromForm] Assignment newAssignment, [FromForm] IFormFileCollection images){
             if (newAssignment == null)
                 return BadRequest();
 
-            _service.Create(newAssignment);
-            return CreatedAtAction(nameof(GetAssignmentById), new {id = newAssignment.Id}, newAssignment);
+            Assignment createdAssignment = await _service.Create(newAssignment);
+
+            if (images != null && images.Count > 0){
+                foreach (var file in images){
+
+                    using var ms = new MemoryStream();
+                    await file.CopyToAsync(ms);
+                    var fileBytes = ms.ToArray();
+
+                    await _mongoAttachmentService.UploadImageAsync(
+                        fileBytes,
+                        file.FileName,
+                        createdAssignment.Id.ToString()
+                    );
+                }
+            }
+
+            return CreatedAtAction(
+                nameof(GetAssignmentById),
+                new { id = newAssignment.Id },
+                newAssignment
+            );
         }
     }
 }
