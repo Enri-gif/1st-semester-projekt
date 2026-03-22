@@ -39,13 +39,23 @@
     </div>
 
     <div class="input-field">
+        <label>Spørgsmål nr</label>
+        <input type="number" min="1" @bind="newAssignment.Number" />
+    </div>
+
+    <div class="input-field">
         <label>Dato</label>
         <input type="date" @bind="newAssignment.Date" />
     </div>
 
     <div class="input-field">
-        <label>Delprøve</label>
+        <label>Underspørgsmål</label>
         <input type="text" @bind="newAssignment.Subquestion" />
+    </div>
+
+    <div class="input-field">
+        <label>Delprøve</label>
+        <input type="number" min="0" @bind="newAssignment.Subtest" />
     </div>
 
     <div class="input-field">
@@ -56,6 +66,11 @@
     <div class="input-field">
         <label>Svar</label>
         <input type="text" @bind="newAssignment.Answer" />
+    </div>
+
+    <div class="input-field">
+        <label>Point</label>
+        <input type="number" min="0" @bind="newAssignment.Points" />
     </div>
 
     <div class="input-field">
@@ -101,15 +116,17 @@
         content.Add(new StringContent(newAssignment.Subject ?? ""), "Subject");
         content.Add(new StringContent(newAssignment.Level ?? ""), "Level");
         content.Add(new StringContent(newAssignment.Year.ToString()), "Year");
+        content.Add(new StringContent(newAssignment.Number.ToString()), "Number");
         content.Add(new StringContent(newAssignment.Date.ToString("yyyy-MM-dd")), "Date");
         content.Add(new StringContent(newAssignment.Subquestion ?? ""), "Subquestion");
+        content.Add(new StringContent(newAssignment.Subtest.ToString()), "Subtest");
         content.Add(new StringContent(newAssignment.Topic ?? ""), "Topic");
         content.Add(new StringContent(newAssignment.Answer ?? ""), "Answer");
+        content.Add(new StringContent(newAssignment.Points.ToString()), "Points");
 
-        foreach (var tag in newAssignment.Tags)
-        {
-            content.Add(new StringContent(tag), "Tags");
-        }
+        // Convert Tags list to comma-separated string for EF Core
+        var tagsString = string.Join(",", newAssignment.Tags);
+        content.Add(new StringContent(tagsString), "Tags");
 
         foreach (var file in selectedFiles)
         {
