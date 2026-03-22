@@ -1,0 +1,98 @@
+@page "/create-assignment-sheet"
+
+<h3>Lav opgavesæt</h3>
+
+<div class="container">
+
+    <!-- VENSTRE: ALLE OPGAVER -->
+    <div class="box">
+        <h4>Opgaver</h4>
+
+        <input placeholder="Filter..." @bind="FilterText" class="form-control" />
+
+        @foreach (var assignment in FilteredAssignments)
+        {
+            <div class="item" @onclick="() => AddToSheet(assignment)">
+                @assignment.Title
+            </div>
+        }
+    </div>
+
+    <!-- PIL -->
+    <div class="arrow">
+        ➡
+    </div>
+
+    <!-- HØJRE: VALGTE OPGAVER -->
+    <div class="box">
+        <h4>Opgavesæt</h4>
+
+        @for (int i = 0; i < SelectedAssignments.Count; i++)
+        {
+            var assignment = SelectedAssignments[i];
+
+        <div class="item selected"
+            @onclick="() => RemoveFromSheet(assignment)">
+
+            <strong>@(i + 1).</strong> @assignment.Title
+
+        </div>
+        }
+
+        <button class="btn btn-success" @onclick="SaveAssignmentSheet">
+            Gem opgavesæt
+        </button>
+    </div>
+
+</div>
+
+@code {
+
+    private List<Assignment> AllAssignments = new();
+    private List<Assignment> SelectedAssignments = new();
+
+    private string FilterText = "";
+
+    // Midlertidig mock data (indtil API er klar)
+    protected override void OnInitialized()
+    {
+        AllAssignments = new List<Assignment>
+        {
+            new Assignment { Id = 1, Title = "Matematik - Algebra" },
+            new Assignment { Id = 2, Title = "Dansk - Analyse" },
+            new Assignment { Id = 3, Title = "Engelsk - Essay" },
+            new Assignment { Id = 4, Title = "Fysik - Energi" }
+        };
+    }
+
+    private IEnumerable<Assignment> FilteredAssignments =>
+        AllAssignments.Where(a =>
+            string.IsNullOrWhiteSpace(FilterText) ||
+            a.Title.Contains(FilterText, StringComparison.OrdinalIgnoreCase));
+
+    private void AddToSheet(Assignment assignment)
+    {
+        if (!SelectedAssignments.Contains(assignment))
+        {
+            SelectedAssignments.Add(assignment);
+        }
+    }
+
+    private void RemoveFromSheet(Assignment assignment)
+    {
+        SelectedAssignments.Remove(assignment);
+    }
+
+    private void SaveAssignmentSheet()
+    {
+        // Her skal API kald komme senere
+        Console.WriteLine("Gemmer opgavesæt...");
+    }
+
+    public class Assignment
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = "";
+    }
+
+}
