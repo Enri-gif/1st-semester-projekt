@@ -18,6 +18,7 @@ builder.Services.AddCors(options =>
     {
         policy.AllowAnyHeader()
               .AllowAnyMethod()
+              .AllowCredentials()
               .WithOrigins("http://localhost:5001"); // frontend URL
     });
 });
