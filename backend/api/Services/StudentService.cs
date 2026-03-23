@@ -8,6 +8,7 @@ public interface IStudentService
 {
     Task<Student?> GetStudent (int id);
     Task<bool> AddStudent (Student student);
+    Task<Student> UpdateStudent (int id);
     Task<bool> DeleteStudent (int id);
 }
 
@@ -50,6 +51,11 @@ public class StudentService : IStudentService
         await dbContext.SaveChangesAsync ();
 
         return true;
+    }
+
+    public async Task<Student> UpdateStudent (int id)
+    {
+        throw new NotImplementedException ();
     }
 
     public async Task<bool> DeleteStudent (int id)

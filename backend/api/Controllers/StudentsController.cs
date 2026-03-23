@@ -54,6 +54,11 @@ public class StudentsController : ControllerBase
         return student;
     }
 
+    public async Task<ActionResult<Student>> UpdateStudent (Student student)
+    {
+        throw new NotImplementedException ("Not bad yet because TDD assignment.");
+    }
+
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteStudent (int id)
     {
