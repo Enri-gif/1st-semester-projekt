@@ -13,8 +13,9 @@ public class DbSeeder
 
     public async Task SeedAsync ()
     {
-        var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>> ();
-        var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>> ();
+        using var scope = serviceProvider.CreateScope ();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>> ();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>> ();
 
         string[] roles = { "Admin", "Teacher", "Student" };
         foreach (var role in roles)
@@ -29,9 +30,9 @@ public class DbSeeder
 
         var users = new[]
         {
-        new { Email = "admin@example.com", Password = "Admin1234!", Role = "Admin" },
-        new { Email = "teacher@teacher.com", Password = "Teacher1234!", Role = "Teacher" },
-        new { Email = "student@student.com", Password = "Student1234!", Role = "Student" }
+            new { Email = "admin@example.com", Password = "Admin1234!", Role = "Admin" },
+            new { Email = "teacher@teacher.com", Password = "Teacher1234!", Role = "Teacher" },
+            new { Email = "student@student.com", Password = "Student1234!", Role = "Student" }
         };
 
         foreach (var u in users)

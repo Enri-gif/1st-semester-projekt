@@ -1,6 +1,10 @@
 using api.Data;
+using Api.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +23,36 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole> (options =>
 .AddEntityFrameworkStores<ApplicationDbContext> ()
 .AddDefaultTokenProviders ();
 
-//builder.Services.AddScoped<DbSeeder> (); // Only required for when seeding below
+builder.Services.AddAuthentication (options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer (options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey (Encoding.UTF8.GetBytes ("B4ll1st1skM1ss1l4ffyr3nd3V4ff3lh3st!")),
+        ValidateIssuer = false,
+        ValidateAudience = false
+    };
+});
+
+builder.Services.AddCors (options =>
+{
+    options.AddPolicy ("AllowWasmClient", policy =>
+    {
+        policy./*AllowAnyOrigin()*/WithOrigins ("https://localhost:7273")
+              .AllowAnyMethod ()
+              .AllowAnyHeader ();
+    });
+});
+
+builder.Services.AddScoped<ITokenService, TokenService> ();
+
+// Only required for when seeding below
+//builder.Services.AddScoped<DbSeeder> ();
 
 //builder.Services.AddRazorPages ();
 builder.Services.AddServerSideBlazor ();
@@ -61,6 +94,8 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+app.UseCors ("AllowWasmClient");
 
 app.UseAuthentication ();
 app.UseAuthorization ();
