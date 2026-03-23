@@ -13,7 +13,12 @@ public interface ITokenService
 
 public class TokenService : ITokenService
 {
-    private readonly string key = "B4ll1st1skM1ss1l4ffyr3nd3V4ff3lh3st!"; // TODO: move to config
+    private readonly IConfiguration config;
+
+    public TokenService(IConfiguration config)
+    {
+        this.config = config;
+    }
 
     public string CreateToken (IdentityUser user)
     {
@@ -23,7 +28,7 @@ public class TokenService : ITokenService
             new Claim(ClaimTypes.NameIdentifier, user.Id)
         };
 
-        var key = new SymmetricSecurityKey (Encoding.UTF8.GetBytes (this.key));
+        var key = new SymmetricSecurityKey (Encoding.UTF8.GetBytes (config["Jwt:Key"]!));
         var creds = new SigningCredentials (key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken (

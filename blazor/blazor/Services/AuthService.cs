@@ -16,7 +16,6 @@ public class AuthService : IAuthService
 
     public void SetToken (string token)
     {
-        http.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue ("Bearer", token);
+        http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue ("Bearer", token);
     }
 }

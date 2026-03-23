@@ -23,6 +23,14 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole> (options =>
 .AddEntityFrameworkStores<ApplicationDbContext> ()
 .AddDefaultTokenProviders ();
 
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace (jwtKey) || jwtKey.Length < 32)
+{
+    throw new InvalidOperationException ("JWT key is missing or too short (min 32 chars).");
+}
+
+var key = new SymmetricSecurityKey (Encoding.UTF8.GetBytes (jwtKey));
+
 builder.Services.AddAuthentication (options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -33,7 +41,7 @@ builder.Services.AddAuthentication (options =>
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey (Encoding.UTF8.GetBytes ("B4ll1st1skM1ss1l4ffyr3nd3V4ff3lh3st!")),
+        IssuerSigningKey = key,
         ValidateIssuer = false,
         ValidateAudience = false
     };
@@ -43,7 +51,7 @@ builder.Services.AddCors (options =>
 {
     options.AddPolicy ("AllowWasmClient", policy =>
     {
-        policy./*AllowAnyOrigin()*/WithOrigins ("https://localhost:7273")
+        policy.WithOrigins ("https://localhost:7273")
               .AllowAnyMethod ()
               .AllowAnyHeader ();
     });

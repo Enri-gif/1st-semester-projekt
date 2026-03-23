@@ -58,9 +58,13 @@ public class DbSeeder
             {
                 var roleResult = await userManager.AddToRoleAsync (user, u.Role);
                 if (!roleResult.Succeeded)
+                {
                     Console.WriteLine ($"Role assignment failed: {u.Email} -> {string.Join (", ", roleResult.Errors.Select (e => e.Description))}");
+                }
                 else
+                {
                     Console.WriteLine ($"Created {u.Email} with role {u.Role}");
+                }
             }
         }
     }

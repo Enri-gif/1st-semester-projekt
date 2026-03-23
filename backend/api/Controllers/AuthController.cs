@@ -21,31 +21,31 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost ("login")]
-    public async Task<IActionResult> Login (/*[FromBody]*/ LoginModel model)
+    public async Task<IActionResult> Login ([FromBody] LoginModel model)
     {
         if (model == null)
+        {
+            Console.WriteLine ($"{0} - Bad Request: Login model is null.", "AuthController");
             return BadRequest ("Login model is null");
+        }
 
         try
         {
             var user = await userManager.FindByNameAsync (model.UserName);
 
-            var passwordHasher = new PasswordHasher<ApplicationUser> ();
-            var verify = passwordHasher.VerifyHashedPassword (user, user.PasswordHash, "Password123!");
-            Console.WriteLine ($"{verify} |||||| {user.PasswordHash}");
-
             if (user == null || !await userManager.CheckPasswordAsync (user, model.Password))
             {
+                Console.WriteLine ($"{0} - Unauthorized: User null or password match failed for user.", "AuthController");
                 return Unauthorized ("This is a restricted area.");
             }
 
             var token = tokenService.CreateToken (user);
+            Console.WriteLine ($"{0} - Succesful Login for {user}", "AuthController");
             return Ok (new LoginResult { Token = token });
         }
         catch (Exception ex)
         {
-            // Log exception
-            Console.WriteLine (ex);
+            Console.WriteLine ($"{0} - Exception thrown: {ex}.", "AuthController");
             return StatusCode (500, ex.Message);
         }
     }

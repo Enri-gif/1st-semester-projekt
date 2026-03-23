@@ -21,7 +21,9 @@ public class UserService : IUserService
         var user = await userManager.FindByNameAsync (username);
 
         if (user == null)
+        {
             return null;
+        }
 
         var valid = await userManager.CheckPasswordAsync (user, password);
 

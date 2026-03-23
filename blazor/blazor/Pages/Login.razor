@@ -18,10 +18,6 @@
 
     private async Task HandleLogin ()
     {
-        Console.WriteLine("HandleLogin called");
-
-        Console.WriteLine("Posting to: " + new Uri(Http.BaseAddress!, "api/auth/login"));
-
         var response = await Http.PostAsJsonAsync("api/auth/login", loginModel);
 
         if (response.IsSuccessStatusCode)
