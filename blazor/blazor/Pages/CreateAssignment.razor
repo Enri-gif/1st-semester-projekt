@@ -1,6 +1,7 @@
-@page "/CreateAssignment"
+@page "/add-assignment"
 @using blazor.models
 @using Microsoft.AspNetCore.Components.Web
+@inject HttpClient Http
 
 <PageTitle>Tilføj Opgave</PageTitle>
 
@@ -11,7 +12,7 @@
         Drag & drop filer her
     </div>
     <div class="img">
-        <button class="img-btn">Find på min computer</button>
+        <InputFile multiple OnChange="OnFilesSelected" />
     </div>
 </div>
 
@@ -53,8 +54,13 @@
     </div>
 
     <div class="input-field">
+        <label>Svar</label>
+        <input type="text" @bind="newAssignment.Answer" />
+    </div>
+
+    <div class="input-field">
         <label>Tags</label>
-        <input type="text" placeholder="Skriv tag og tryk Enter" @bind="currentTag" @onkeydown="AddTag" />
+        <input type="text" placeholder="Skriv tag og tryk Enter" @bind="currentTag" @onkeydown="@(e => AddTag(e))" />
         <div class="tag-container">
             @foreach (var tag in newAssignment.Tags)
             {
@@ -62,15 +68,16 @@
             }
         </div>
     </div>
+
     <div>
         <button class="submit" @onclick="SubmitAssignment">Opret</button>
     </div>
-
 </div>
 
 @code {
     private Assignment newAssignment = new();
     private string currentTag = "";
+    private List<IBrowserFile> selectedFiles = new();
 
     private void AddTag(KeyboardEventArgs e)
     {
@@ -80,7 +87,48 @@
             currentTag = "";
         }
     }
-    //api her
-    private void SubmitAssignment(){
+
+    private void OnFilesSelected(InputFileChangeEventArgs e)
+    {
+        selectedFiles = e.GetMultipleFiles().ToList();
+    }
+
+    private async Task SubmitAssignment()
+    {
+        using var content = new MultipartFormDataContent();
+
+        content.Add(new StringContent(newAssignment.Education ?? ""), "Education");
+        content.Add(new StringContent(newAssignment.Subject ?? ""), "Subject");
+        content.Add(new StringContent(newAssignment.Level ?? ""), "Level");
+        content.Add(new StringContent(newAssignment.Year.ToString()), "Year");
+        content.Add(new StringContent(newAssignment.Date.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(newAssignment.Subquestion ?? ""), "Subquestion");
+        content.Add(new StringContent(newAssignment.Topic ?? ""), "Topic");
+        content.Add(new StringContent(newAssignment.Answer ?? ""), "Answer");
+
+        foreach (var tag in newAssignment.Tags)
+        {
+            content.Add(new StringContent(tag), "Tags");
+        }
+
+        foreach (var file in selectedFiles)
+        {
+            var stream = file.OpenReadStream(maxAllowedSize: 10_000_000); // 10MB max
+            content.Add(new StreamContent(stream), "images", file.Name);
+        }
+
+        var response = await Http.PostAsync("http://localhost:5000/api/assignment", content);
+
+        if (response.IsSuccessStatusCode)
+        {
+            newAssignment = new Assignment();
+            selectedFiles.Clear();
+            StateHasChanged();
+        }
+        else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error: {error}");
+        }
     }
 }

@@ -1,6 +1,6 @@
-﻿using api.Data;
-using api.DTOs;
+﻿using api.DTOs;
 using api.Models;
+using Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers;
@@ -9,11 +9,11 @@ namespace api.Controllers;
 [Route ("api/[controller]")]
 public class StudentsController : ControllerBase
 {
-    private readonly ApplicationDbContext dbContext;
+    private readonly IStudentService studentService;
 
-    public StudentsController (ApplicationDbContext dbContext)
+    public StudentsController (IStudentService studentService)
     {
-        this.dbContext = dbContext;
+        this.studentService = studentService;
     }
 
     [HttpPost]
@@ -25,8 +25,13 @@ public class StudentsController : ControllerBase
             LastName = dto.LastName
         };
 
-        dbContext.Students.Add (student);
-        await dbContext.SaveChangesAsync ();
+        var addSuccess = await studentService.AddStudent (student);
+
+        if (!addSuccess)
+        {
+            Console.WriteLine ("Failed adding student");
+            return BadRequest();
+        }
 
         Console.WriteLine ($"Succesfully created student {student.FirstName}.");
 
@@ -36,7 +41,7 @@ public class StudentsController : ControllerBase
     [HttpGet ("{id}")]
     public async Task<ActionResult<Student>> GetStudent (int id)
     {
-        var student = await dbContext.Students.FindAsync (id);
+        var student = await studentService.GetStudent (id);
 
         if (student == null)
         {
@@ -47,5 +52,18 @@ public class StudentsController : ControllerBase
         Console.WriteLine ($"Controller found a student for id {id}.");
 
         return student;
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult> DeleteStudent (int id)
+    {
+        var deleteSuccess = await studentService.DeleteStudent (id);
+
+        if (!deleteSuccess)
+        {
+            return BadRequest ();
+        }
+
+        return NoContent ();
     }
 }

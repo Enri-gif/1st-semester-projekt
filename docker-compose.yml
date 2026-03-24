@@ -1,13 +1,16 @@
 # Usage
 # Start from CLI with:
 # docker compose up -d
-
+#
 # Stop it from CLI with:
 # docker compose down
-
+#
 # Full reset from CLI (deletes volume):
 # docker compose down -v
-
+#
+# CLI
+# docker exec -it 1-Semester-MongoDB mongosh -u admin -p strongpassword
+# docker exec -it 1-Semester-MSSQL-DB /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "$SA_PASSWORD"
 version: "3.9"
 
 services:
@@ -18,13 +21,25 @@ services:
     restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: "Th3_Stronkest_Paeswourt"
-      MSSQL_MEMORY_LIMIT_MB: 1024 # Optional memory usage limit
+      SA_PASSWORD: "${SA_PASSWORD}"
+      MSSQL_MEMORY_LIMIT_MB: 1024
     ports:
       - "1433:1433"
-    volumes: # For persistent storage
+    volumes:
       - sql-data:/var/opt/mssql
+
+  mongodb:
+    image: mongodb/mongodb-community-server:7.0-ubi8-slim
+    container_name: 1-Semester-MongoDB
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_ROOT_USERNAME}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASSWORD}"
 
 volumes:
   sql-data:
-  
+  mongo-data:

@@ -5,26 +5,56 @@
 
 <div class="form-container">
 
+    <label>K.nr.</label>
+    <input class="form-control" @bind="CustomerNumber" />
+
+    <label>K.id.</label>
+    <input class="form-control" @bind="CustomerId" />
+
     <label>Fornavn</label>
     <input class="form-control" @bind="FirstName" />
 
     <label>Efternavn</label>
     <input class="form-control" @bind="LastName" />
 
-    <label>Email</label>
+    <label>F.dato</label>
+    <input type="date" class="form-control" @bind="BirthDate" />
+
+    <label>Telefon</label>
+    <input class="form-control" @bind="Phone" />
+
+    <label>Mail</label>
     <input class="form-control" @bind="Email" />
 
+    <label>Adresse</label>
+    <input class="form-control" @bind="Address" />
+
+    <label>Post/By</label>
+    <input class="form-control" @bind="City" />
+
+    <label>Tilmeldt</label>
+    <input type="date" class="form-control" @bind="EnrolledDate" />
+
+    <label>Ophørt</label>
+    <input type="date" class="form-control" @bind="InactiveDate" />
+
+    <label>Pause</label>
+    <input type="date" class="form-control" @bind="PauseDate" />
+
+    <label>Vælg hold</label>
     <select class="form-control" @bind="SelectedClass">
-    <option value="">-- Vælg hold --</option>
+        <option value="">-- Vælg hold --</option>
 
-    @foreach (var c in Classes)
-    {
-        <option value="@c">@c</option>
-    }
-
+        @foreach (var c in Classes)
+        {
+            <option value="@c">@c</option>
+        }
     </select>
 
-    <button class="btn btn-success" @onclick="CreateStudent">
+    <label class="full-width">Bemærkning</label>
+    <textarea class="form-control full-width" @bind="Note"></textarea>
+
+    <button class="btn btn-success full-width" @onclick="CreateStudent">
         Opret elev
     </button>
 
@@ -32,32 +62,21 @@
 
 @code {
 
+    private string CustomerNumber = "";
+    private string CustomerId = "";
     private string FirstName = "";
     private string LastName = "";
+    private DateTime? EnrolledDate;
+    private DateTime? InactiveDate;
+    private DateTime? PauseDate;
+    private string Note = "";
+    private string Phone = "";
     private string Email = "";
+    private string Address = "";
+    private string City = "";
+    private DateTime? BirthDate;
+
     private string SelectedClass = "";
-
-    private async Task CreateStudent()
-    {
-        var student = new
-        {
-            firstName = FirstName,
-            lastName = LastName,
-            email = Email,
-            studentClass = SelectedClass
-        };
-
-        var response = await Http.PostAsJsonAsync("api/students", student);
-
-        if (response.IsSuccessStatusCode)
-        {
-            Console.WriteLine("Elev oprettet!");
-        }
-        else
-        {
-            Console.WriteLine("Fejl ved oprettelse af elev.");
-        }
-    }
 
     private List<string> Classes = new()
     {
@@ -67,5 +86,36 @@
         "3A"
     };
 
+private async Task CreateStudent()
+{
+    var student = new
+    {
+        customerNumber = CustomerNumber,
+        customerId = CustomerId,
+        firstName = FirstName,
+        lastName = LastName,
+        enrolled = EnrolledDate,
+        inactive = InactiveDate,
+        pause = PauseDate,
+        note = Note,
+        phone = Phone,
+        email = Email,
+        address = Address,
+        city = City,
+        birthDate = BirthDate,
+        studentClass = SelectedClass
+    };
+
+    var response = await Http.PostAsJsonAsync("api/students", student);
+
+    if (response.IsSuccessStatusCode)
+    {
+        Console.WriteLine("Elev oprettet!");
+    }
+    else
+    {
+        Console.WriteLine("Fejl ved oprettelse af elev.");
+    }
 }
 
+}

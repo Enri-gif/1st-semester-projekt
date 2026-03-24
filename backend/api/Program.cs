@@ -1,6 +1,7 @@
 using api.Data;
-using Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using api.Services;
+using Api.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -11,6 +12,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddControllers();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevCors", policy =>
+    {
+        policy.AllowAnyHeader()
+              .AllowAnyMethod()
+              .WithOrigins("http://localhost:5001"); // frontend URL
+    });
+});
 
 builder.Services.AddDbContext<ApplicationDbContext> (options =>
     options.UseSqlServer (builder.Configuration.GetConnectionString ("DefaultConnection")));
@@ -62,12 +75,17 @@ builder.Services.AddScoped<ITokenService, TokenService> ();
 // Only required for when seeding below
 //builder.Services.AddScoped<DbSeeder> ();
 
+//hvorfor?
 //builder.Services.AddRazorPages ();
 builder.Services.AddServerSideBlazor ();
 
 builder.Services.AddControllers ();
+builder.Services.AddScoped<AssignmentService>();
+builder.Services.AddScoped<IStudentService, StudentService> ();
+builder.Services.AddSingleton<MongoAttachmentService>();
 
 var app = builder.Build();
+app.UseCors("DevCors");
 
 // Enable to seed from DbSeeder-class
 //using (var scope = app.Services.CreateScope ())
@@ -104,11 +122,10 @@ app.MapGet("/weatherforecast", () =>
 .WithName("GetWeatherForecast");
 
 app.UseCors ("AllowWasmClient");
+app.MapControllers();
 
 app.UseAuthentication ();
 app.UseAuthorization ();
-
-app.MapControllers ();
 
 app.Run();
 
