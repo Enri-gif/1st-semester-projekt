@@ -16,6 +16,7 @@
         devShells.${system}.default = pkgs.mkShell {
             packages = [
                 dotnet
+                pkgs.sqlcmd
             ];
 
             shellHook = ''
