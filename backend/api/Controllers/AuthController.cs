@@ -1,6 +1,7 @@
 ﻿using api.Data;
 using Api.DTOs;
 using Api.Services;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Authorization;
@@ -9,6 +10,7 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route ("api/auth")]
+[EnableCors("DevCors")]
 public class AuthController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> userManager;
@@ -39,7 +41,7 @@ public class AuthController : ControllerBase
                 return Unauthorized ("This is a restricted area.");
             }
 
-            var token = tokenService.CreateToken (user);
+            var token = await tokenService.CreateToken (user);
             Console.WriteLine ($"{0} - Succesful Login for {user}", "AuthController");
             return Ok (new LoginResult { Token = token });
         }

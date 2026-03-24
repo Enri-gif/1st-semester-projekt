@@ -6,25 +6,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-
-builder.Services.AddControllers();
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("DevCors", policy =>
-    {
-        policy.AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials()
-              .WithOrigins("http://localhost:5001"); // frontend URL
-    });
-});
 
 builder.Services.AddDbContext<ApplicationDbContext> (options =>
     options.UseSqlServer (builder.Configuration.GetConnectionString ("DefaultConnection")));
@@ -57,17 +45,19 @@ builder.Services.AddAuthentication (options =>
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = key,
         ValidateIssuer = false,
-        ValidateAudience = false
+        ValidateAudience = false,
+        RoleClaimType = ClaimTypes.Role
     };
 });
 
 builder.Services.AddCors (options =>
 {
-    options.AddPolicy ("AllowWasmClient", policy =>
+    options.AddPolicy("DevCors", policy =>
     {
-        policy.WithOrigins ("https://localhost:7273")
-              .AllowAnyMethod ()
-              .AllowAnyHeader ();
+        policy.WithOrigins("https://localhost:5001") // frontend URL
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -86,7 +76,6 @@ builder.Services.AddScoped<IStudentService, StudentService> ();
 builder.Services.AddSingleton<MongoAttachmentService>();
 
 var app = builder.Build();
-app.UseCors("DevCors");
 
 // Enable to seed from DbSeeder-class
 //using (var scope = app.Services.CreateScope ())
@@ -102,11 +91,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseCors ("AllowWasmClient");
-app.MapControllers();
+app.UseRouting();
+app.UseCors();
 
 app.UseAuthentication ();
 app.UseAuthorization ();
+
+app.MapControllers();
 
 app.Run();
