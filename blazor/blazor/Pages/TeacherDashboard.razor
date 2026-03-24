@@ -1,0 +1,57 @@
+@page "/teacher-dashboard"
+@attribute [Authorize(Roles = "Teacher")]
+
+<h3>Lærer Dashboard</h3>
+
+<div class="dashboard-buttons">
+
+    <button class="btn btn-primary" @onclick="GoToAddStudent">Tilføj elev</button>
+
+    <button class="btn btn-primary" @onclick="GoToAddAssignment">Tilføj opgave</button>
+
+    <button class="btn btn-primary" @onclick="GoToCreateAssignmentSheet">Lav opgavesæt</button>
+
+    <button class="btn btn-primary" @onclick="GoToAssignmentSheetOverview">Opgavesæt oversigt</button>
+
+    <button class="btn btn-primary" @onclick="GoToEditAssignmentSheet">Ret opgavesæt</button>
+
+    <button class="btn btn-primary" @onclick="GoToUploadVideo">Upload video</button>
+
+    <button class="btn btn-primary" @onclick="GoToGenerateDiagram">Generer diagram</button>
+
+</div>
+@code{
+
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
+
+    private void GoToAddStudent()
+    {
+        Navigation.NavigateTo("/add-student");
+    }
+    private void GoToAddAssignment()
+    {
+        Navigation.NavigateTo("/add-assignment");
+    }
+    private void GoToCreateAssignmentSheet()
+    {
+        Navigation.NavigateTo("/create-assignment-sheet");
+    }
+    private void GoToAssignmentSheetOverview()
+    {
+        Navigation.NavigateTo("/assignment-sheet-overview");
+    }
+    private void GoToEditAssignmentSheet()
+    {
+        Navigation.NavigateTo("/edit-assignment-sheet");
+    }
+    private void GoToUploadVideo()
+    {
+        Navigation.NavigateTo("/upload-video");
+    }
+    private void GoToGenerateDiagram()
+    {
+        Navigation.NavigateTo("/generate-diagram");
+    }
+
+}

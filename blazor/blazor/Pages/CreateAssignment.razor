@@ -1,0 +1,151 @@
+@page "/add-assignment"
+@using blazor.models
+@using Microsoft.AspNetCore.Components.Web
+@inject HttpClient Http
+
+<PageTitle>Tilføj Opgave</PageTitle>
+
+<h1>Tilføj Opgave</h1>
+
+<div class="img-div">
+    <div class="drop-box">
+        Drag & drop filer her
+    </div>
+    <div class="img">
+        <InputFile multiple OnChange="OnFilesSelected" />
+    </div>
+</div>
+
+<div class="input-grid">
+
+    <div class="input-field">
+        <label>Uddannelse</label>
+        <input type="text" @bind="newAssignment.Education" />
+    </div>
+
+    <div class="input-field">
+        <label>Fag</label>
+        <input type="text" @bind="newAssignment.Subject" />
+    </div>
+
+    <div class="input-field">
+        <label>Niveau</label>
+        <input type="text" @bind="newAssignment.Level" />
+    </div>
+
+    <div class="input-field">
+        <label>Årstal</label>
+        <input type="number" @bind="newAssignment.Year" />
+    </div>
+
+    <div class="input-field">
+        <label>Spørgsmål nr</label>
+        <input type="number" min="1" @bind="newAssignment.Number" />
+    </div>
+
+    <div class="input-field">
+        <label>Dato</label>
+        <input type="date" @bind="newAssignment.Date" />
+    </div>
+
+    <div class="input-field">
+        <label>Underspørgsmål</label>
+        <input type="text" @bind="newAssignment.Subquestion" />
+    </div>
+
+    <div class="input-field">
+        <label>Delprøve</label>
+        <input type="number" min="0" @bind="newAssignment.Subtest" />
+    </div>
+
+    <div class="input-field">
+        <label>Emne</label>
+        <input type="text" @bind="newAssignment.Topic" />
+    </div>
+
+    <div class="input-field">
+        <label>Svar</label>
+        <input type="text" @bind="newAssignment.Answer" />
+    </div>
+
+    <div class="input-field">
+        <label>Point</label>
+        <input type="number" min="0" @bind="newAssignment.Points" />
+    </div>
+
+    <div class="input-field">
+        <label>Tags</label>
+        <input type="text" placeholder="Skriv tag og tryk Enter" @bind="currentTag" @onkeydown="@(e => AddTag(e))" />
+        <div class="tag-container">
+            @foreach (var tag in newAssignment.Tags)
+            {
+                <span class="tag">@tag</span>
+            }
+        </div>
+    </div>
+
+    <div>
+        <button class="submit" @onclick="SubmitAssignment">Opret</button>
+    </div>
+</div>
+
+@code {
+    private Assignment newAssignment = new();
+    private string currentTag = "";
+    private List<IBrowserFile> selectedFiles = new();
+
+    private void AddTag(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(currentTag))
+        {
+            newAssignment.Tags.Add(currentTag);
+            currentTag = "";
+        }
+    }
+
+    private void OnFilesSelected(InputFileChangeEventArgs e)
+    {
+        selectedFiles = e.GetMultipleFiles().ToList();
+    }
+
+    private async Task SubmitAssignment()
+    {
+        using var content = new MultipartFormDataContent();
+
+        content.Add(new StringContent(newAssignment.Education ?? ""), "Education");
+        content.Add(new StringContent(newAssignment.Subject ?? ""), "Subject");
+        content.Add(new StringContent(newAssignment.Level ?? ""), "Level");
+        content.Add(new StringContent(newAssignment.Year.ToString()), "Year");
+        content.Add(new StringContent(newAssignment.Number.ToString()), "Number");
+        content.Add(new StringContent(newAssignment.Date.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(newAssignment.Subquestion ?? ""), "Subquestion");
+        content.Add(new StringContent(newAssignment.Subtest.ToString()), "Subtest");
+        content.Add(new StringContent(newAssignment.Topic ?? ""), "Topic");
+        content.Add(new StringContent(newAssignment.Answer ?? ""), "Answer");
+        content.Add(new StringContent(newAssignment.Points.ToString()), "Points");
+
+        // Convert Tags list to comma-separated string for EF Core
+        var tagsString = string.Join(",", newAssignment.Tags);
+        content.Add(new StringContent(tagsString), "Tags");
+
+        foreach (var file in selectedFiles)
+        {
+            var stream = file.OpenReadStream(maxAllowedSize: 10_000_000); // 10MB max
+            content.Add(new StreamContent(stream), "images", file.Name);
+        }
+
+        var response = await Http.PostAsync("http://localhost:5000/api/assignment", content);
+
+        if (response.IsSuccessStatusCode)
+        {
+            newAssignment = new Assignment();
+            selectedFiles.Clear();
+            StateHasChanged();
+        }
+        else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error: {error}");
+        }
+    }
+}

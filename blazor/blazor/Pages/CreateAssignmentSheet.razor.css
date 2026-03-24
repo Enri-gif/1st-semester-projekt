@@ -1,0 +1,44 @@
+.container {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.box {
+    border: 1px solid black;
+    padding: 15px;
+    width: 300px;
+    height: 400px;
+    overflow-y: auto; /* SCROLL */
+}
+
+.item {
+    border: 1px solid gray;
+    padding: 10px;
+    margin: 5px 0;
+    cursor: pointer;
+
+    word-wrap: break-word; /* lange tekster */
+}
+
+.item img {
+    max-width: 100%;
+    height: auto;
+}
+
+.item:hover {
+    background-color: #eee;
+}
+
+.selected {
+    background-color: #cce5ff;
+}
+
+.arrow {
+    font-size: 30px;
+}
+
+.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
