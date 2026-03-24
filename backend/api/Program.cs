@@ -1,8 +1,11 @@
 using api.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using api.Services;
 using Api.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,7 +37,44 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole> (options =>
 .AddEntityFrameworkStores<ApplicationDbContext> ()
 .AddDefaultTokenProviders ();
 
-//builder.Services.AddScoped<DbSeeder> (); // Only required for when seeding below
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace (jwtKey) || jwtKey.Length < 32)
+{
+    throw new InvalidOperationException ("JWT key is missing or too short (min 32 chars).");
+}
+
+var key = new SymmetricSecurityKey (Encoding.UTF8.GetBytes (jwtKey));
+
+builder.Services.AddAuthentication (options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer (options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = key,
+        ValidateIssuer = false,
+        ValidateAudience = false
+    };
+});
+
+builder.Services.AddCors (options =>
+{
+    options.AddPolicy ("AllowWasmClient", policy =>
+    {
+        policy.WithOrigins ("https://localhost:7273")
+              .AllowAnyMethod ()
+              .AllowAnyHeader ();
+    });
+});
+
+builder.Services.AddScoped<ITokenService, TokenService> ();
+
+// Only required for when seeding below
+//builder.Services.AddScoped<DbSeeder> ();
 
 //hvorfor?
 //builder.Services.AddRazorPages ();
@@ -82,6 +122,7 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 
+app.UseCors ("AllowWasmClient");
 app.MapControllers();
 
 app.UseAuthentication ();

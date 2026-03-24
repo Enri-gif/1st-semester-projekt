@@ -6,4 +6,6 @@
     <Project Path="blazor/blazor/blazor.csproj" />
     <Project Path="Tests/Tests.csproj" Id="1b0e44c4-bc04-456b-811c-9d3a0eb9c117" />
   </Folder>
+  <Project Path="Shared/Shared.csproj" Id="fc56bd44-ee3f-4f81-bc39-a3a86b0fc69d" />
+  <Project Path="tests/Tests/Tests.csproj" Id="9930e1b3-118a-4909-93df-9f8ac28878a6" />
 </Solution>
