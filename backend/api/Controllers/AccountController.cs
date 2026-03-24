@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using api.Data;
+using Microsoft.AspNetCore.Cors;
 
 [ApiController]
 [Route("api/[controller]")]
+[EnableCors("DevCors")]
 public class AccountController : ControllerBase
 {
     [Authorize]
@@ -20,6 +22,11 @@ public class AccountController : ControllerBase
             .Where(c => c.Type == ClaimTypes.Role)
             .Select(c => c.Value)
             .ToList();
+
+        foreach (var claim in user.Claims)
+        {
+            Console.WriteLine($"{user.Identity?.Name} ||||||| {claim}");
+        }
 
         return Ok(new
         {
