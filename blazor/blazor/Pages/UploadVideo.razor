@@ -1,0 +1,66 @@
+@page "/upload-video"
+@using Microsoft.AspNetCore.Components.Forms
+@inject HttpClient Http
+
+<PageTitle>Upload Video</PageTitle>
+
+<div class="vid-div">
+    <div class="drop-box">
+        Drag & drop filer her
+    </div>
+    <div class="vid">
+        <InputFile OnChange="OnFilesSelected" />
+    </div>
+</div>
+
+<div>
+    <button class="Upload" @onclick="UploadVideoAsync">Upload videoer</button>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(statusMessage))
+{
+    <p>@statusMessage</p>
+}
+
+@code {
+    private IBrowserFile? selectedFile;
+    private string statusMessage = "";
+
+    private void OnFilesSelected(InputFileChangeEventArgs e){
+
+        selectedFile = e.File;
+    }
+
+    private async Task UploadVideoAsync(){
+
+        if (selectedFile is null){
+
+            statusMessage = "No file selected.";
+            return;
+        }
+
+        using var content = new MultipartFormDataContent();
+
+        var streamContent = new StreamContent(
+            selectedFile.OpenReadStream(maxAllowedSize: 500 * 1024 * 1024)
+        );
+
+        streamContent.Headers.ContentType =
+            new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+
+        content.Add(streamContent, "file", selectedFile.Name);
+
+        var response = await Http.PostAsync("api/video", content);
+
+        if (response.IsSuccessStatusCode){
+
+            var result = await response.Content.ReadAsStringAsync();
+            statusMessage = $"Upload successful: {result}";
+        }
+        else{
+
+            var error = await response.Content.ReadAsStringAsync();
+            statusMessage = $"Upload failed: {error}";
+        }
+    }
+}

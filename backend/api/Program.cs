@@ -54,7 +54,7 @@ builder.Services.AddCors (options =>
 {
     options.AddPolicy("DevCors", policy =>
     {
-        policy.WithOrigins("https://localhost:5001") // frontend URL
+        policy.WithOrigins("https://localhost:5001", "http://localhost:5001") // frontend URL
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -73,7 +73,8 @@ builder.Services.AddServerSideBlazor ();
 builder.Services.AddControllers ();
 builder.Services.AddScoped<AssignmentService>();
 builder.Services.AddScoped<IStudentService, StudentService> ();
-builder.Services.AddSingleton<MongoAttachmentService>();
+builder.Services.AddSingleton<MongoImageService>();
+builder.Services.AddSingleton<MongoVideoService>();
 
 var app = builder.Build();
 
@@ -92,7 +93,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
-app.UseCors();
+app.UseCors("DevCors");
 
 app.UseAuthentication ();
 app.UseAuthorization ();
