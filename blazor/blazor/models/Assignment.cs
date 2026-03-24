@@ -12,8 +12,11 @@ namespace blazor.models
         public int Year { get; set; } = DateTime.Today.Year;
         public DateTime Date { get; set; } = DateTime.Today;
         public string Subquestion { get; set; } = "";
-        public string Subtest { get; set; } = "";
+        public int Subtest { get; set; } = 1;
         public string Topic { get; set; } = "";
+        public string Owner { get; set; } = "Prøvebank";
+        public int Number { get; set; } = 1;
+        public int Points { get; set; } = 0;
         public List<string> Tags { get; set; } = new List<string>();
     }
 }

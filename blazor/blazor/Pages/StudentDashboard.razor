@@ -1,0 +1,119 @@
+@page "/student-dashboard"
+@using blazor.models
+@using Microsoft.AspNetCore.Components.Web
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<PageTitle>Student Dashboard</PageTitle>
+
+<h1>Student Dashboard</h1>
+
+<div class="controls">
+    <input placeholder="Søgfelt..."
+           @bind="searchText" />
+
+    <select @onchange="SortChanged">
+        <option value="date">Sorter efter dato</option>
+        <option value="subject">Sorter efter fag</option>
+    </select>
+
+    <button class="nav-button" @onclick="GoToStatistics">Se Statistik</button>
+</div>
+
+<p>Filtered count: @FilteredAssignments.Count()</p>
+
+<div class="assignment-container">
+    @foreach (var assignment in FilteredAssignments)
+    {
+        <div class="assignment-row">
+            <div class="assignment-col subject">
+                @assignment.Subject
+            </div>
+
+            <div class="assignment-col topic">
+                @assignment.Topic
+            </div>
+
+            <div class="assignment-col date">
+                @assignment.Date.ToShortDateString()
+            </div>
+
+            <div class="assignment-col owner">
+                @assignment.Owner
+            </div>
+
+            <div class="assignment-col button-col">
+                <button class="assignment-button">Se Opgave</button>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="change-password-box">
+    <h3>Ændre adgangskode</h3>
+
+    <input type="password" placeholder="Ny adgangskode" />
+    <input type="password" placeholder="Gentag adgangskode" />
+
+    <button class="save-password-button">Gem ændring</button>
+</div>
+
+@code {
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
+
+    private List<Assignment> assignments = new();
+    private string searchText = string.Empty;
+    private string currentSort = "date";
+
+    private void GoToStatistics()
+    {
+        Navigation.NavigateTo("/statistik-elev");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAssignmentsAsync();
+    }
+
+    private async Task LoadAssignmentsAsync()
+    {
+        try
+        {
+            assignments = await Http.GetFromJsonAsync<List<Assignment>>("http://localhost:5000/api/assignment")
+                          ?? new List<Assignment>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load assignments: {ex.Message}");
+        }
+    }
+
+    private IEnumerable<Assignment> FilteredAssignments
+    {
+        get
+        {
+            var query = assignments.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                query = query.Where(a =>
+                    a.Subject.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                    a.Topic.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+            }
+
+            query = currentSort switch
+            {
+                "subject" => query.OrderBy(a => a.Subject),
+                _ => query.OrderBy(a => a.Date)
+            };
+
+            return query;
+        }
+    }
+
+    private void SortChanged(ChangeEventArgs e)
+    {
+        currentSort = e.Value?.ToString() ?? "date";
+    }
+}

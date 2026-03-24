@@ -9,7 +9,7 @@
 # docker compose down -v
 #
 # CLI
-# docker exec -it 1-Semester-MongoDB mongosh -u admin -p strongpassword
+# sqlcmd -S localhost,1433 -U SA -P "Th3_Stronkest_Paeswourt"
 # docker exec -it 1-Semester-MSSQL-DB /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "$SA_PASSWORD"
 version: "3.9"
 
