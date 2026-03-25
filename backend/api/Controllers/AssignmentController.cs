@@ -9,10 +9,10 @@ namespace api.Controllers
     public class AssignmentController : ControllerBase{
 
         private readonly AssignmentService _service;
-        private readonly MongoAttachmentService _mongoAttachmentService;
+        private readonly MongoImageService _mongoImageService;
 
-        public AssignmentController(AssignmentService service, MongoAttachmentService mongoAttachmentService){
-            _mongoAttachmentService = mongoAttachmentService;
+        public AssignmentController(AssignmentService service, MongoImageService mongoImageService){
+            _mongoImageService = mongoImageService;
             _service = service;
         }
 
@@ -45,7 +45,7 @@ namespace api.Controllers
                     await file.CopyToAsync(ms);
                     var fileBytes = ms.ToArray();
 
-                    await _mongoAttachmentService.UploadImageAsync(
+                    await _mongoImageService.UploadImageAsync(
                         fileBytes,
                         file.FileName,
                         createdAssignment.Id.ToString()
