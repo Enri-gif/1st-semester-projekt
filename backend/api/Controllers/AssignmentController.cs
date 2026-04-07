@@ -59,5 +59,10 @@ namespace api.Controllers
                 newAssignment
             );
         }
+
+        public async Task<ActionResult<Assignment>> DeleteAssignment(Guid id)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

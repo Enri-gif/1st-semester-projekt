@@ -1,16 +1,26 @@
 using System;
 using System.Threading.Tasks;
 using api.Controllers;
+using api.Data;
 using api.Models;
 using api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using xunit;
+using Microsoft.Extensions.Configuration;
+using Xunit;
 
 namespace api.Tests
 {
     public class AssignmentControllerTests
     {
+        private readonly IConfiguration config;
+
+        public AssignmentControllerTests (IConfiguration config)
+        {
+            this.config = config;
+        }
+
+
         private AssignmentController GetControllerWithInMemoryDb(out ApplicationDbContext context)
         {
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -19,7 +29,8 @@ namespace api.Tests
 
             context = new ApplicationDbContext(options);
             var service = new AssignmentService(context);
-            return new AssignmentController(service);
+            var mongo = new MongoImageService(config);
+            return new AssignmentController(service, mongo);
         }
 
         [Fact]
