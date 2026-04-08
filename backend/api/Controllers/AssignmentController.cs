@@ -64,6 +64,18 @@ namespace api.Controllers
             return Ok(result);
         }
 
+        [HttpGet("with-id")]
+        public async Task<ActionResult<List<AssignmentWithIdDTO>>> GetAssignmentsWithId(){
+            var assignments = await _assignmentservice.GetAll();
+            return Ok(assignments.Select(a => new AssignmentWithIdDTO{
+                Id = a.Id,
+                Subject = a.Subject,
+                Topic = a.Topic,
+                Number = a.Number
+            }).ToList());
+        }
+
+
         [HttpPost]
         public async Task<ActionResult<Assignment>> CreateAssignment([FromForm] Assignment newAssignment, [FromForm] IFormFileCollection images){
             if (newAssignment == null)
