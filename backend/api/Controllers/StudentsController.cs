@@ -54,17 +54,17 @@ public class StudentsController : ControllerBase
         return student;
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateStudent (int id, [FromBody] Student updatedStudent)
+    [HttpPut()]
+    public async Task<IActionResult> UpdateStudent ([FromBody] Student updatedStudent)
     {
-        var currentStudent = await studentService.GetStudent (id);
+        var currentStudent = await studentService.GetStudent (updatedStudent.Id);
 
         if (currentStudent == null)
         {
             return BadRequest ("No student found.");
         }
 
-        await studentService.UpdateStudent (id, updatedStudent);
+        await studentService.UpdateStudent (updatedStudent);
 
         return NoContent ();
     }

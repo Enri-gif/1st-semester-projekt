@@ -8,7 +8,7 @@ public interface IStudentService
 {
     Task<Student?> GetStudent (int id);
     Task<bool> AddStudent (Student student);
-    Task<bool> UpdateStudent (int id, Student updateStudent);
+    Task<bool> UpdateStudent (Student updateStudent);
     Task<bool> DeleteStudent (int id);
 }
 
@@ -53,9 +53,9 @@ public class StudentService : IStudentService
         return true;
     }
 
-    public async Task<bool> UpdateStudent (int id, Student updateStudent)
+    public async Task<bool> UpdateStudent (Student updateStudent)
     {
-        var student = await dbContext.Students.FirstOrDefaultAsync (s => s.Id == id);
+        var student = await dbContext.Students.FirstOrDefaultAsync (s => s.Id == updateStudent.Id);
 
         if (student == null)
         {
