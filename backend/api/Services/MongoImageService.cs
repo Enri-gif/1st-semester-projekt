@@ -60,4 +60,15 @@ public class MongoImageService{
     public Task<List<string>> GetAllImagesAsync(){
         return GetImageUrlsAsync(Builders<GridFSFileInfo>.Filter.Empty);
     }
+    public async Task DeleteImagesByAssignmentIdAsync(string assignmentId){
+        FilterDefinition<GridFSFileInfo> filter =
+            Builders<GridFSFileInfo>.Filter.Eq("metadata.assignmentIds", assignmentId);
+
+        IAsyncCursor<GridFSFileInfo> cursor = await _gridFS.FindAsync(filter);
+        List<GridFSFileInfo> files = await cursor.ToListAsync();
+
+        foreach (GridFSFileInfo file in files){
+            await _gridFS.DeleteAsync(file.Id);
+        }
+    }
 }

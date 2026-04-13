@@ -11,6 +11,7 @@
 # CLI
 # sqlcmd -S localhost,1433 -U SA -P "Th3_Stronkest_Paeswourt"
 # docker exec -it 1-Semester-MSSQL-DB /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "$SA_PASSWORD"
+# docker exec -it 1-Semester-MongoDB mongosh "mongodb://admin:strongpassword@localhost:27017"
 version: "3.9"
 
 services:

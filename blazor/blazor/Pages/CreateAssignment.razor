@@ -134,7 +134,7 @@
             content.Add(new StreamContent(stream), "images", file.Name);
         }
 
-        var response = await Http.PostAsync("http://localhost:5000/api/assignment", content);
+        var response = await Http.PostAsync("https://localhost:5000/api/assignment", content);
 
         if (response.IsSuccessStatusCode)
         {
