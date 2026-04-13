@@ -54,6 +54,21 @@ public class StudentsController : ControllerBase
         return student;
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateStudent (int id, [FromBody] Student updatedStudent)
+    {
+        var currentStudent = await studentService.GetStudent (id);
+
+        if (currentStudent == null)
+        {
+            return BadRequest ("No student found.");
+        }
+
+        await studentService.UpdateStudent (id, updatedStudent);
+
+        return NoContent ();
+    }
+
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteStudent (int id)
     {

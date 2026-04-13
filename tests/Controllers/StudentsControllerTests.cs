@@ -35,6 +35,32 @@ public class StudentsControllerTests
         Assert.Equal(student.LastName, studentType.LastName);
     }
 
+    [Theory]
+    [InlineData("Bob", "Smirnoff")]
+    [InlineData("Thomas", "Iglesias")]
+    [InlineData("Valorious", "Terpentine")]
+    public async Task UpdateStudent_WhenStudentExists_Succeeds (string updatedFirstName, string updatedLastName)
+    {
+        // Arrange
+        var studentCon = new StudentsController (studentService.Object);
+        studentService.Setup (s => s.GetStudent (0)).ReturnsAsync (new Student { Id = 0, FirstName = "Bob", LastName = "Iglesias" });
+        var updateStudent = new Student ()
+        {
+            Id = 0,
+            FirstName = updatedFirstName,
+            LastName = updatedLastName
+        };
+
+        // Act
+        await studentCon.UpdateStudent (updateStudent.Id, updateStudent);
+        var postupdateStudent = await studentCon.GetStudent (0);
+
+        // Assert
+        Assert.Equal (0, postupdateStudent.Value!.Id);
+        Assert.Equal (updatedFirstName, postupdateStudent.Value!.FirstName);
+        Assert.Equal (updatedLastName, postupdateStudent.Value!.LastName);
+    }
+
     [Fact]
     public async Task DeleteStudent_WhenStudentExists_Succeeds ()
     {
