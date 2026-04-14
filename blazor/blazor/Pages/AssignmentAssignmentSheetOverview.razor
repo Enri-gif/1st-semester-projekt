@@ -1,0 +1,64 @@
+@page "/assignment-assignment-sheet-overview"
+
+<h1 class="title">Opgave & Opgavesæt oversigt</h1>
+
+<div class="container">
+
+    <!-- Opgavesæt -->
+    <div class="column">
+        <button class="top-button">Liste af Opgavesæt</button>
+
+        <div class="box">
+            @* TODO: Indsæt opgavesæt fra database her *@
+            @foreach (var sæt in Opgavesæt)
+            {
+                <div class="item @(selectedOpgavesæt.Contains(sæt) ? "selected" : "")"
+                     @onclick="() => ToggleOpgavesæt(sæt)">
+                    @sæt
+                </div>
+            }
+        </div>
+
+        <button class="delete-button">Slet opgavesæt</button>
+    </div>
+
+    <!-- Opgaver -->
+    <div class="column">
+        <button class="top-button">Liste af Opgaver</button>
+
+        <div class="box">
+            @* TODO: Indsæt opgaver fra database her *@
+            @foreach (var opgave in Opgaver)
+            {
+                <div class="item @(selectedOpgaver.Contains(opgave) ? "selected" : "")"
+                     @onclick="() => ToggleOpgave(opgave)">
+                    @opgave
+                </div>
+            }
+        </div>
+
+        <button class="delete-button">Slet opgave</button>
+    </div>
+
+</div>
+
+@code {
+    // Midlertidig data (erstattes senere af API)
+    private List<string> Opgavesæt = new() { "Opgavesæt 1", "Opgavesæt 2", "Opgavesæt 3" };
+    private List<string> Opgaver = new() { "Opgave 1", "Opgave 2", "Opgave 3" };
+
+    private HashSet<string> selectedOpgavesæt = new();
+    private HashSet<string> selectedOpgaver = new();
+
+    private void ToggleOpgavesæt(string sæt)
+    {
+        if (!selectedOpgavesæt.Add(sæt))
+            selectedOpgavesæt.Remove(sæt);
+    }
+
+    private void ToggleOpgave(string opgave)
+    {
+        if (!selectedOpgaver.Add(opgave))
+            selectedOpgaver.Remove(opgave);
+    }
+}
