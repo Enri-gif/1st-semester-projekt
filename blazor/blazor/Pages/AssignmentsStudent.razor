@@ -1,0 +1,109 @@
+@page "/assignments-student"
+
+<h1 class="title">Besvarelse</h1>
+
+<div class="container">
+
+    <!-- Opgave 1 -->
+    <div class="opgave-block">
+
+        <div class="opgave-header">
+            <span>Opgave 1a</span>
+        </div>
+
+        <div class="opgave-box"></div>
+
+    <div class="opgave-actions">
+        <input type="text"
+            placeholder="Vurdering"
+            @bind="elevVurdering1"
+            disabled="@isLocked1" />
+
+        <button @onclick="() => VisLaerer(1)"
+            disabled="@string.IsNullOrWhiteSpace(elevVurdering1)">
+            @(IsVisible(1) ? "Vurdering vist" : "Se vurdering")
+        </button>
+
+        <button @onclick="() => SeVideo(1)">
+            Se video
+        </button>
+    </div>
+
+        @if (IsVisible(1))
+        {
+            <div class="laerer-box">
+                <div>Lærers Vurdering</div>
+                <input type="text" value="Godkendt" disabled />
+
+                <div>Lærers Kommentar</div>
+                <input type="text" value="Flot arbejde" disabled />
+            </div>
+        }
+
+    </div>
+
+    <!-- Opgave 2 -->
+    <div class="opgave-block">
+
+        <div class="opgave-header">
+            <span>Opgave 2a</span>
+        </div>
+
+        <div class="opgave-box"></div>
+
+    <div class="opgave-actions">
+        <input type="text"
+            placeholder="Vurdering"
+            @bind="elevVurdering2"
+            disabled="@isLocked2" />
+
+        <button @onclick="() => VisLaerer(2)"
+            disabled="@string.IsNullOrWhiteSpace(elevVurdering2)">
+            @(IsVisible(2) ? "Vurdering vist" : "Se vurdering")
+        </button>
+
+        <button @onclick="() => SeVideo(2)">
+            Se video
+        </button>
+    </div>
+
+        @if (IsVisible(2))
+        {
+            <div class="laerer-box">
+                <div>Lærers Vurdering</div>
+                <input type="text" value="Ikke godkendt" disabled />
+
+                <div>Lærers Kommentar</div>
+                <input type="text" value="Prøv igen" disabled />
+            </div>
+        }
+
+    </div>
+
+</div>
+
+@code {
+    private string elevVurdering1 = "";
+    private string elevVurdering2 = "";
+
+    private HashSet<int> visible = new();
+
+    private bool isLocked1 = false;
+    private bool isLocked2 = false;
+
+    private void VisLaerer(int id)
+    {
+        visible.Add(id);
+
+        if (id == 1) isLocked1 = true;
+        if (id == 2) isLocked2 = true;
+    }
+
+    private void SeVideo(int id)
+    {
+        // Placeholder for video functionality
+        Console.WriteLine($"Se video for opgave {id}");
+    }
+
+    private bool IsVisible(int id) => visible.Contains(id);
+}
