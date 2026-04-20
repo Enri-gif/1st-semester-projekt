@@ -10,7 +10,7 @@ namespace api.Controllers;
 
 [ApiController]
 [Route ("api/[controller]")]
-[Authorize(Roles = Roles.Student)]
+[Authorize(Roles = Roles.Teacher)]
 public class StudentsController : ControllerBase
 {
     private readonly IStudentService studentService;
@@ -64,6 +64,18 @@ public class StudentsController : ControllerBase
         logger.LogInformation("Created student {StudentId} ({FirstName})", student.Id, student.FirstName);
 
         return CreatedAtAction (nameof (GetStudent), new { id = student.Id }, student);
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<Student>>> GetStudents ([FromQuery(Name = "class")] string? className)
+    {
+        if (string.IsNullOrWhiteSpace(className))
+        {
+            return BadRequest(new { message = "Query parameter 'class' is required." });
+        }
+
+        var students = await studentService.GetByClass(className);
+        return Ok(students);
     }
 
     [HttpGet ("{id}")]

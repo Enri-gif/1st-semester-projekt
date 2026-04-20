@@ -11,6 +11,7 @@ public interface IStudentService
     Task<bool> AddStudent (Student student);
     Task<bool> UpdateStudent (Student updateStudent);
     Task<bool> DeleteStudent (Guid id);
+    Task<IEnumerable<Student>> GetByClass (string className);
 }
 
 public class StudentService : IStudentService
@@ -80,6 +81,21 @@ public class StudentService : IStudentService
 
         logger.LogInformation("UpdateStudent: updated student {StudentId}", student.Id);
         return true;
+    }
+
+    public async Task<IEnumerable<Student>> GetByClass (string className)
+    {
+        if (string.IsNullOrWhiteSpace(className))
+        {
+            return Array.Empty<Student>();
+        }
+
+        return await dbContext.Students
+            .AsNoTracking()
+            .Where(s => s.StudentClass == className)
+            .OrderBy(s => s.LastName)
+            .ThenBy(s => s.FirstName)
+            .ToListAsync();
     }
 
     public async Task<bool> DeleteStudent (Guid id)

@@ -12,12 +12,13 @@ namespace Tests.ControllerTests;
 
 public class AssignmentSheetControllerTests
 {
-    private static AssignmentSheetController Build(Mock<IAssignmentSheetRepository> repo)
+    private static AssignmentSheetController Build(Mock<IAssignmentSheetRepository> repo, Mock<IStudentService>? studentService = null)
     {
         var service = new AssignmentSheetService(repo.Object);
         return new AssignmentSheetController(
             service,
             new SpreadsheetService(),
+            (studentService ?? new Mock<IStudentService>()).Object,
             new CreateAssignmentSheetDtoValidator(),
             new UpdateAssignmentSheetDtoValidator());
     }

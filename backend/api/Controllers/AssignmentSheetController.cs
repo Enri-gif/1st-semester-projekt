@@ -15,17 +15,20 @@ public class AssignmentSheetController : ControllerBase
 {
     private readonly AssignmentSheetService _service;
     private readonly SpreadsheetService _spreadsheetService;
+    private readonly IStudentService _studentService;
     private readonly IValidator<CreateAssignmentSheetDto> _createValidator;
     private readonly IValidator<UpdateAssignmentSheetDto> _updateValidator;
 
     public AssignmentSheetController(
         AssignmentSheetService service,
         SpreadsheetService spreadsheetService,
+        IStudentService studentService,
         IValidator<CreateAssignmentSheetDto> createValidator,
         IValidator<UpdateAssignmentSheetDto> updateValidator)
     {
         _service = service;
         _spreadsheetService = spreadsheetService;
+        _studentService = studentService;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
     }
@@ -144,5 +147,28 @@ public class AssignmentSheetController : ControllerBase
         return File(bytes,
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             filename);
+    }
+
+    [HttpGet("{id}/spreadsheet/class/{className}")]
+    public async Task<IActionResult> GetClassMarkingSheets(Guid id, string className)
+    {
+        var sheet = await _service.GetAssignmentSheet(id);
+        if (sheet == null)
+        {
+            return NotFound(new { message = "Assignment sheet not found." });
+        }
+
+        var students = (await _studentService.GetByClass(className)).ToList();
+        if (students.Count == 0)
+        {
+            return NotFound(new { message = $"No students found for class '{className}'." });
+        }
+
+        var bytes = _spreadsheetService.GenerateClassMarkingSheetsZip(sheet, students);
+        var safeTitle = string.IsNullOrWhiteSpace(sheet.Title) ? "opgavesaet" : sheet.Title;
+        var safeClass = string.IsNullOrWhiteSpace(className) ? "klasse" : className;
+        var filename = $"{safeTitle}-{safeClass}-rettearker.zip";
+
+        return File(bytes, "application/zip", filename);
     }
 }
