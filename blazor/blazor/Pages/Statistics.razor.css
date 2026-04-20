@@ -1,0 +1,31 @@
+.chart-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    background: #fafafa;
+}
+
+.chart-section h2 {
+    margin-top: 0;
+    font-size: 1.1rem;
+}
+
+::deep .legend {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 0 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.25rem;
+    font-size: 0.85rem;
+}
+
+::deep .legend .swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-right: 6px;
+    vertical-align: middle;
+    border-radius: 2px;
+}

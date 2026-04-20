@@ -1,9 +1,18 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace api.Models;
 
 public class AssignmentSheet
 {
-    public int Id { get; set; }
-    public List<Assignment> Tasks { get; set; } = new();
-    public string Type { get; set; } = ""; // "prøve" eller "lektier"
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    [Key]
+    public Guid Id { get; init; }
+    public string Title { get; set; } = "";
+    public string Subject { get; set; } = "";
+    public string Level { get; set; } = "";
+    public int Year { get; set; } = DateTime.Today.Year;
+    public string Owner { get; set; } = "";
+    public List<Assignment> Assignments { get; set; } = new List<Assignment>();
+
+    [Timestamp]
+    public byte[]? RowVersion { get; set; }
 }

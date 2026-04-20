@@ -1,55 +1,83 @@
-﻿using api.DTOs;
+using api.DTOs;
 using api.Models;
-using Api.Services;
+using api.Services;
+using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared;
 
 namespace api.Controllers;
 
 [ApiController]
 [Route ("api/[controller]")]
+[Authorize(Roles = Roles.Student)]
 public class StudentsController : ControllerBase
 {
     private readonly IStudentService studentService;
+    private readonly IValidator<CreateStudentDTO> validator;
+    private readonly ILogger<StudentsController> logger;
 
-    public StudentsController (IStudentService studentService)
+    public StudentsController (IStudentService studentService, IValidator<CreateStudentDTO> validator, ILogger<StudentsController> logger)
     {
         this.studentService = studentService;
+        this.validator = validator;
+        this.logger = logger;
     }
 
     [HttpPost]
     public async Task<ActionResult<Student>> CreateStudent ([FromBody] CreateStudentDTO dto)
     {
+        var validation = await validator.ValidateAsync(dto);
+        if (!validation.IsValid)
+        {
+            return ValidationProblem(new ValidationProblemDetails(
+                validation.Errors.GroupBy(e => e.PropertyName)
+                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())));
+        }
+
         var student = new Student
         {
             FirstName = dto.FirstName,
-            LastName = dto.LastName
+            LastName = dto.LastName,
+            Email = dto.Email,
+            CustomerNumber = dto.CustomerNumber,
+            CustomerId = dto.CustomerId,
+            Phone = dto.Phone,
+            Address = dto.Address,
+            City = dto.City,
+            Note = dto.Note,
+            StudentClass = dto.StudentClass,
+            BirthDate = dto.BirthDate,
+            Enrolled = dto.Enrolled,
+            Inactive = dto.Inactive,
+            Pause = dto.Pause
         };
 
         var addSuccess = await studentService.AddStudent (student);
 
         if (!addSuccess)
         {
-            Console.WriteLine ("Failed adding student");
+            logger.LogWarning("Failed adding student {FirstName} {LastName}", student.FirstName, student.LastName);
             return BadRequest();
         }
 
-        Console.WriteLine ($"Succesfully created student {student.FirstName}.");
+        logger.LogInformation("Created student {StudentId} ({FirstName})", student.Id, student.FirstName);
 
         return CreatedAtAction (nameof (GetStudent), new { id = student.Id }, student);
     }
 
     [HttpGet ("{id}")]
-    public async Task<ActionResult<Student>> GetStudent (int id)
+    public async Task<ActionResult<Student>> GetStudent (Guid id)
     {
         var student = await studentService.GetStudent (id);
 
         if (student == null)
         {
-            Console.WriteLine ($"Controller found no student for id {id}.");
+            logger.LogInformation("No student found for id {StudentId}", id);
             return NotFound ();
         }
 
-        Console.WriteLine ($"Controller found a student for id {id}.");
+        logger.LogDebug("Found student {StudentId}", id);
 
         return student;
     }
@@ -70,13 +98,13 @@ public class StudentsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult> DeleteStudent (int id)
+    public async Task<ActionResult> DeleteStudent (Guid id)
     {
         var deleteSuccess = await studentService.DeleteStudent (id);
 
         if (!deleteSuccess)
         {
-            return BadRequest ();
+            return NotFound ();
         }
 
         return NoContent ();

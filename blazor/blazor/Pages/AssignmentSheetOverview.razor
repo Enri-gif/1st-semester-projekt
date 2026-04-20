@@ -1,0 +1,71 @@
+@page "/assignment-sheet-overview"
+@using Shared
+@using blazor.models
+@using System.Net.Http.Json
+@attribute [Authorize(Roles = Roles.Teacher)]
+@inject HttpClient Http
+
+<PageTitle>Opgavesæt oversigt</PageTitle>
+
+<h1>Opgavesæt oversigt</h1>
+
+@if (loading)
+{
+    <p>Indlæser...</p>
+}
+else if (sheets.Count == 0)
+{
+    <p>Ingen opgavesæt endnu.</p>
+}
+else
+{
+    <table class="result-table">
+        <thead>
+            <tr><th>Titel</th><th>Fag</th><th>Niveau</th><th>År</th><th>Ejer</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var s in sheets)
+        {
+            <tr @key="s.Id">
+                <td>@s.Title</td>
+                <td>@s.Subject</td>
+                <td>@s.Level</td>
+                <td>@s.Year</td>
+                <td>@s.Owner</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<AssignmentSheetSummary> sheets = new();
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            sheets = await Http.GetFromJsonAsync<List<AssignmentSheetSummary>>("api/assignmentsheet")
+                     ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load sheets: {ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    public class AssignmentSheetSummary
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = "";
+        public string Subject { get; set; } = "";
+        public string Level { get; set; } = "";
+        public int Year { get; set; }
+        public string Owner { get; set; } = "";
+    }
+}

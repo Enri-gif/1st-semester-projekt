@@ -1,84 +1,81 @@
-using System;
-using System.Threading.Tasks;
 using api.Controllers;
 using api.Data;
+using api.DTOs;
 using api.Models;
 using api.Services;
+using api.Validators;
+using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Xunit;
 
-namespace api.Tests
+namespace api.Tests;
+
+public class AssignmentControllerTests
 {
-    public class AssignmentControllerTests
+    private static AssignmentController CreateController(out ApplicationDbContext context)
     {
-        private readonly IConfiguration config;
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
 
-        public AssignmentControllerTests (IConfiguration config)
+        context = new ApplicationDbContext(options);
+        var service = new AssignmentService(context, mongoVideoService: null!, mongoImageService: null!);
+        return new AssignmentController(service, mongoImageService: null!, new CreateAssignmentDtoValidator());
+    }
+
+    [Fact]
+    public async Task GetAssignmentById_ShouldReturnAssignment_WhenExists()
+    {
+        var controller = CreateController(out var context);
+        var assignment = new Assignment
         {
-            this.config = config;
-        }
+            Id = Guid.NewGuid(),
+            Subject = "Math",
+            Level = "A",
+            Topic = "Algebra",
+            Points = 10,
+            Number = 1
+        };
+        context.Assignments.Add(assignment);
+        await context.SaveChangesAsync();
 
+        var result = await controller.GetAssignmentById(assignment.Id);
 
-        private AssignmentController GetControllerWithInMemoryDb(out ApplicationDbContext context)
-        {
-            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-                .Options;
+        var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+        ok.Value.Should().BeOfType<Assignment>()
+            .Which.Id.Should().Be(assignment.Id);
+    }
 
-            context = new ApplicationDbContext(options);
-            var service = new AssignmentService(context);
-            var mongo = new MongoImageService(config);
-            return new AssignmentController(service, mongo);
-        }
+    [Fact]
+    public async Task GetAssignmentById_ShouldReturnNotFound_WhenMissing()
+    {
+        var controller = CreateController(out _);
 
-        [Fact]
-        public async Task DeleteAssignment_ShouldReturnDeletedAssignment_WhenAssignmentExists()
-        {
-            // Arrange
-            var controller = GetControllerWithInMemoryDb(out var context);
+        var result = await controller.GetAssignmentById(Guid.NewGuid());
 
-            var assignment = new Assignment
-            {
-                Id = Guid.NewGuid(),
-                Answer = "Test Answer",
-                Topic = "Test Topic",
-                Subject = "Test Subject",
-                Level = "A",
-                Subtest = 1,
-                Subquestion = "1",
-                Points = 10,
-                Number = 1
-            };
+        result.Result.Should().BeOfType<NotFoundResult>();
+    }
 
-            context.Assignments.Add(assignment);
-            await context.SaveChangesAsync();
+    [Fact]
+    public async Task GetAssignments_ShouldFilterBySubject_AndPaginate()
+    {
+        var controller = CreateController(out var context);
+        context.Assignments.AddRange(
+            new Assignment { Id = Guid.NewGuid(), Subject = "Math", Points = 5,  Number = 1, Date = DateTime.Today.AddDays(-2) },
+            new Assignment { Id = Guid.NewGuid(), Subject = "Math", Points = 10, Number = 2, Date = DateTime.Today.AddDays(-1) },
+            new Assignment { Id = Guid.NewGuid(), Subject = "Danish", Points = 7, Number = 3, Date = DateTime.Today }
+        );
+        await context.SaveChangesAsync();
 
-            // Act
-            var result = await controller.DeleteAssignment(assignment.Id);
+        var result = await controller.GetAssignments(
+            subject: "Math",
+            level: null, year: null, topic: null, owner: null, tag: null, assignmentSheetId: null,
+            page: 1, pageSize: 10, sortBy: "points", sortDir: "desc");
 
-            // Assert
-            var actionResult = Assert.IsType<ActionResult<Assignment>>(result);
-            var deletedAssignment = Assert.IsType<Assignment>(actionResult.Value);
-
-            Assert.Equal(assignment.Id, deletedAssignment.Id);
-
-            var dbAssignment = await context.Assignments.FindAsync(assignment.Id);
-            Assert.Null(dbAssignment);
-        }
-
-        [Fact]
-        public async Task DeleteAssignment_ShouldReturnNotFound_WhenAssignmentDoesNotExist()
-        {
-            // Arrange
-            var controller = GetControllerWithInMemoryDb(out var _);
-
-            // Act
-            var result = await controller.DeleteAssignment(Guid.NewGuid());
-
-            // Assert
-            Assert.IsType<NotFoundResult>(result.Result);
-        }
+        var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var paged = ok.Value.Should().BeOfType<PagedResult<Assignment>>().Subject;
+        paged.Total.Should().Be(2);
+        paged.Items.Should().HaveCount(2);
+        paged.Items.First().Points.Should().Be(10);
     }
 }

@@ -1,6 +1,8 @@
 @page "/create-assignment-sheet"
 @using blazor.models
+@using Shared
 @inject HttpClient Http
+@attribute [Authorize(Roles = Roles.Teacher)]
 
 <h3>Lav opgavesæt</h3>
 

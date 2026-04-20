@@ -5,6 +5,7 @@ namespace blazor.models
 {
     public class Assignment
     {
+        public Guid Id { get; set; }
         public string Answer { get; set; } = "";
         public string Education { get; set; } = "";
         public string Subject { get; set; } = "";

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace Api.Services;
+namespace api.Services;
 
 public interface IUserService
 {
