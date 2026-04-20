@@ -1,4 +1,6 @@
 @page "/create-assignment-sheet"
+@using Shared
+@attribute [Authorize(Roles = Roles.Teacher)]
 
 <h3>Lav opgavesæt</h3>
 

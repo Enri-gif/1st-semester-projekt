@@ -15,4 +15,5 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Student> Students { get; set; }
     public DbSet<Assignment> Assignments { get; set; }
+    public DbSet<AssignmentSheet> AssignmentSheets { get; set; }
 }

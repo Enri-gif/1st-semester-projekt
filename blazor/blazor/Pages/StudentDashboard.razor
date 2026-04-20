@@ -1,7 +1,9 @@
 @page "/student-dashboard"
+@using Shared
 @using blazor.models
 @using Microsoft.AspNetCore.Components.Web
 @using System.Net.Http.Json
+@attribute [Authorize(Roles = Roles.Student)]
 @inject HttpClient Http
 
 <PageTitle>Student Dashboard</PageTitle>
@@ -80,7 +82,7 @@
     {
         try
         {
-            assignments = await Http.GetFromJsonAsync<List<Assignment>>("http://localhost:5000/api/assignment")
+            assignments = await Http.GetFromJsonAsync<List<Assignment>>("api/assignment")
                           ?? new List<Assignment>();
         }
         catch (Exception ex)

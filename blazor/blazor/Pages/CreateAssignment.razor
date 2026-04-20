@@ -1,6 +1,8 @@
 @page "/add-assignment"
+@using Shared
 @using blazor.models
 @using Microsoft.AspNetCore.Components.Web
+@attribute [Authorize(Roles = Roles.Teacher)]
 @inject HttpClient Http
 
 <PageTitle>Tilføj Opgave</PageTitle>
@@ -134,7 +136,7 @@
             content.Add(new StreamContent(stream), "images", file.Name);
         }
 
-        var response = await Http.PostAsync("http://localhost:5000/api/assignment", content);
+        var response = await Http.PostAsync("api/assignment", content);
 
         if (response.IsSuccessStatusCode)
         {

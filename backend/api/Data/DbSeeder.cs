@@ -1,14 +1,17 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
+using Shared;
 
 namespace api.Data;
 
 public class DbSeeder
 {
     private readonly IServiceProvider serviceProvider;
+    private readonly ILogger<DbSeeder> logger;
 
-    public DbSeeder (IServiceProvider serviceProvider)
+    public DbSeeder (IServiceProvider serviceProvider, ILogger<DbSeeder> logger)
     {
         this.serviceProvider = serviceProvider;
+        this.logger = logger;
     }
 
     public async Task SeedAsync ()
@@ -17,22 +20,22 @@ public class DbSeeder
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>> ();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>> ();
 
-        string[] roles = { "Admin", "Teacher", "Student" };
+        string[] roles = { Roles.Admin, Roles.Teacher, Roles.Student };
         foreach (var role in roles)
         {
             if (!await roleManager.RoleExistsAsync (role))
             {
                 var roleResult = await roleManager.CreateAsync (new IdentityRole (role));
                 if (!roleResult.Succeeded)
-                    Console.WriteLine ($"Role creation failed: {role} -> {string.Join (", ", roleResult.Errors.Select (e => e.Description))}");
+                    logger.LogError("Role creation failed: {Role} -> {Errors}", role, string.Join(", ", roleResult.Errors.Select(e => e.Description)));
             }
         }
 
         var users = new[]
         {
-            new { Email = "admin@example.com", Password = "Admin1234!", Role = "Admin" },
-            new { Email = "teacher@teacher.com", Password = "Teacher1234!", Role = "Teacher" },
-            new { Email = "student@student.com", Password = "Student1234!", Role = "Student" }
+            new { Email = "admin@example.com", Password = "Admin1234!", Role = Roles.Admin },
+            new { Email = "teacher@teacher.com", Password = "Teacher1234!", Role = Roles.Teacher },
+            new { Email = "student@student.com", Password = "Student1234!", Role = Roles.Student }
         };
 
         foreach (var u in users)
@@ -49,7 +52,7 @@ public class DbSeeder
                 var result = await userManager.CreateAsync (user, u.Password);
                 if (!result.Succeeded)
                 {
-                    Console.WriteLine ($"User creation failed: {u.Email} -> {string.Join (", ", result.Errors.Select (e => e.Description))}");
+                    logger.LogError("User creation failed: {Email} -> {Errors}", u.Email, string.Join(", ", result.Errors.Select(e => e.Description)));
                     continue;
                 }
             }
@@ -59,11 +62,11 @@ public class DbSeeder
                 var roleResult = await userManager.AddToRoleAsync (user, u.Role);
                 if (!roleResult.Succeeded)
                 {
-                    Console.WriteLine ($"Role assignment failed: {u.Email} -> {string.Join (", ", roleResult.Errors.Select (e => e.Description))}");
+                    logger.LogError("Role assignment failed: {Email} -> {Errors}", u.Email, string.Join(", ", roleResult.Errors.Select(e => e.Description)));
                 }
                 else
                 {
-                    Console.WriteLine ($"Created {u.Email} with role {u.Role}");
+                    logger.LogInformation("Created {Email} with role {Role}", u.Email, u.Role);
                 }
             }
         }
