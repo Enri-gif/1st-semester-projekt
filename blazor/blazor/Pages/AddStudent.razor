@@ -2,6 +2,7 @@
 @using Shared
 @attribute [Authorize(Roles = Roles.Teacher)]
 @inject HttpClient Http
+@inject NavigationManager Navigation
 
 <h3>Opret elev</h3>
 
@@ -122,9 +123,14 @@ private async Task CreateStudent()
 
     if (response.IsSuccessStatusCode)
     {
-        statusMessage = $"Elev '{FirstName} {LastName}' blev oprettet.";
+        statusMessage = $"Elev '{FirstName} {LastName}' blev oprettet. Sender dig tilbage til dashboard...";
         isSuccess = true;
         ResetForm();
+        StateHasChanged();
+
+        await Task.Delay(1500);
+        Navigation.NavigateTo("/teacher-dashboard");
+        return;
     }
     else
     {
