@@ -84,6 +84,19 @@ public class AssignmentSheetControllerTests
     }
 
     [Fact]
+    public async Task DeleteAssignmentSheet_ReturnsNoContent_OnSuccess()
+    {
+        var id = Guid.NewGuid();
+        var repo = new Mock<IAssignmentSheetRepository>();
+        repo.Setup(r => r.DeleteAsync(id)).ReturnsAsync(true);
+
+        var result = await Build(repo).DeleteAssignmentSheet(id);
+
+        result.Should().BeOfType<NoContentResult>();
+        repo.Verify(r => r.DeleteAsync(id), Times.Once);
+    }
+
+    [Fact]
     public async Task GetSpreadsheet_ReturnsXlsxFile_WhenSheetExists()
     {
         var sheet = new AssignmentSheet
