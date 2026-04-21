@@ -37,7 +37,8 @@
                     dotnet tool restore
                 fi
 
-                exec zsh
+                export SHELL=$(which zsh)
+                exec zsh -l -c 'eval "$(dotnet completions script zsh)"; exec zsh'
             '';
         };
     };

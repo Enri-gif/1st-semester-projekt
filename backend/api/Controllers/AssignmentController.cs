@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using api.Models;
 using api.Services;
+using api.DTOs;
 
 namespace api.Controllers
 {
@@ -8,35 +9,79 @@ namespace api.Controllers
     [ApiController]
     public class AssignmentController : ControllerBase{
 
-        private readonly AssignmentService _service;
+        private readonly AssignmentService _assignmentservice;
         private readonly MongoImageService _mongoImageService;
 
-        public AssignmentController(AssignmentService service, MongoImageService mongoImageService){
+        public AssignmentController(AssignmentService assignmentservice, MongoImageService mongoImageService){
             _mongoImageService = mongoImageService;
-            _service = service;
+            _assignmentservice = assignmentservice;
         }
 
         [HttpGet]
         public async Task<ActionResult<List<Assignment>>> GetAssignments(){
-            return Ok(await _service.GetAll());
+            return Ok(await _assignmentservice.GetAll());
+        }
+
+        [HttpGet("with-images")]
+        public async Task<ActionResult<List<AssignmentImagesDTO>>> GetAssignmentsWithImages(){
+            var assignments = await _assignmentservice.GetAll();
+            List<AssignmentImagesDTO> result = new List<AssignmentImagesDTO>();
+
+            foreach (Assignment assignment in assignments){
+                List<string> images = await _mongoImageService.GetImagesByAssignmentIdAsync(assignment.Id.ToString());
+
+                result.Add(new AssignmentImagesDTO{
+                    Assignment = assignment,
+                    ImageUrls = images
+                });
+            }
+
+            return Ok(result);
         }
         
         [HttpGet("{id}")]
         public async Task<ActionResult<Assignment>> GetAssignmentById(Guid id){
-            Assignment assignment = await _service.GetById(id);
+            Assignment assignment = await _assignmentservice.GetById(id);
             if (assignment == null)
                 return NotFound();
 
             return Ok(assignment);
-            
         }
+
+        [HttpGet("{id}/with-images")]
+        public async Task<ActionResult<AssignmentImagesDTO>> GetAssignmentByIdWithImages(Guid id){
+            Assignment assignment = await _assignmentservice.GetById(id);
+            if (assignment == null)
+                return NotFound();
+
+            List<string> images = await _mongoImageService.GetImagesByAssignmentIdAsync(assignment.Id.ToString());
+
+            var result = new AssignmentImagesDTO{
+                Assignment = assignment,
+                ImageUrls = images
+            };
+
+            return Ok(result);
+        }
+
+        [HttpGet("with-id")]
+        public async Task<ActionResult<List<AssignmentWithIdDTO>>> GetAssignmentsWithId(){
+            var assignments = await _assignmentservice.GetAll();
+            return Ok(assignments.Select(a => new AssignmentWithIdDTO{
+                Id = a.Id,
+                Subject = a.Subject,
+                Topic = a.Topic,
+                Number = a.Number
+            }).ToList());
+        }
+
 
         [HttpPost]
         public async Task<ActionResult<Assignment>> CreateAssignment([FromForm] Assignment newAssignment, [FromForm] IFormFileCollection images){
             if (newAssignment == null)
                 return BadRequest();
 
-            Assignment createdAssignment = await _service.Create(newAssignment);
+            Assignment createdAssignment = await _assignmentservice.Create(newAssignment);
 
             if (images != null && images.Count > 0){
                 foreach (var file in images){
@@ -59,10 +104,14 @@ namespace api.Controllers
                 newAssignment
             );
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAssignment(Guid id){
+            bool deleted = await _assignmentservice.DeleteAssignment(id);
 
-        public async Task<ActionResult<Assignment>> DeleteAssignment(Guid id)
-        {
-            throw new NotImplementedException();
+            if (!deleted)
+                return NotFound();
+
+            return NoContent();
         }
     }
 }
