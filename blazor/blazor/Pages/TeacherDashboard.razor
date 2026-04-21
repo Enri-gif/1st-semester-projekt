@@ -11,7 +11,7 @@
 
     <button class="btn btn-primary" @onclick="GoToCreateAssignmentSheet">Lav opgavesæt</button>
 
-    <button class="btn btn-primary" @onclick="GoToAssignmentSheetOverview">Opgavesæt oversigt</button>
+    <button class="btn btn-primary" @onclick="GoToAssignmentAssignmentSheetOverview">Opgave & Opgavesæt oversigt</button>
 
     <button class="btn btn-primary" @onclick="GoToEditAssignmentSheet">Ret opgavesæt</button>
 
@@ -37,9 +37,9 @@
     {
         Navigation.NavigateTo("/create-assignment-sheet");
     }
-    private void GoToAssignmentSheetOverview()
+    private void GoToAssignmentAssignmentSheetOverview()
     {
-        Navigation.NavigateTo("/assignment-sheet-overview");
+        Navigation.NavigateTo("/assignment-assignment-sheet-overview");
     }
     private void GoToEditAssignmentSheet()
     {
