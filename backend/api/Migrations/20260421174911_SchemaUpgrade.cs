@@ -11,14 +11,29 @@ namespace api.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<Guid>(
+            // SQL Server cannot ALTER a column to change its IDENTITY property,
+            // and int -> uniqueidentifier is not a safe implicit conversion.
+            // Drop the PK and column, then recreate Id as a Guid with NEWID() default.
+            // Existing student rows are discarded (schema break documented in PR).
+            migrationBuilder.DropPrimaryKey(
+                name: "PK_Students",
+                table: "Students");
+
+            migrationBuilder.DropColumn(
+                name: "Id",
+                table: "Students");
+
+            migrationBuilder.AddColumn<Guid>(
                 name: "Id",
                 table: "Students",
                 type: "uniqueidentifier",
                 nullable: false,
-                oldClrType: typeof(int),
-                oldType: "int")
-                .OldAnnotation("SqlServer:Identity", "1, 1");
+                defaultValueSql: "NEWID()");
+
+            migrationBuilder.AddPrimaryKey(
+                name: "PK_Students",
+                table: "Students",
+                column: "Id");
 
             migrationBuilder.AddColumn<string>(
                 name: "Address",
@@ -217,14 +232,27 @@ namespace api.Migrations
                 name: "TeacherEvaluation",
                 table: "Assignments");
 
-            migrationBuilder.AlterColumn<int>(
+            // Mirror of the Up: drop PK + Guid column, recreate as int IDENTITY.
+            migrationBuilder.DropPrimaryKey(
+                name: "PK_Students",
+                table: "Students");
+
+            migrationBuilder.DropColumn(
+                name: "Id",
+                table: "Students");
+
+            migrationBuilder.AddColumn<int>(
                 name: "Id",
                 table: "Students",
                 type: "int",
                 nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uniqueidentifier")
+                defaultValue: 0)
                 .Annotation("SqlServer:Identity", "1, 1");
+
+            migrationBuilder.AddPrimaryKey(
+                name: "PK_Students",
+                table: "Students",
+                column: "Id");
         }
     }
 }
