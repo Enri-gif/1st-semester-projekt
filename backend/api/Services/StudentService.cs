@@ -8,6 +8,7 @@ public interface IStudentService
 {
     Task<Student?> GetStudent (int id);
     Task<bool> AddStudent (Student student);
+    Task<bool> UpdateStudent (Student updateStudent);
     Task<bool> DeleteStudent (int id);
 }
 
@@ -47,6 +48,25 @@ public class StudentService : IStudentService
         }
 
         dbContext.Students.Add (student);
+        await dbContext.SaveChangesAsync ();
+
+        return true;
+    }
+
+    public async Task<bool> UpdateStudent (Student updateStudent)
+    {
+        var student = await dbContext.Students.FirstOrDefaultAsync (s => s.Id == updateStudent.Id);
+
+        if (student == null)
+        {
+            // TODO Logging
+            return false;
+        }
+
+        student.FirstName = updateStudent.FirstName;
+        student.LastName = updateStudent.LastName;
+        student.Email = updateStudent.Email;
+
         await dbContext.SaveChangesAsync ();
 
         return true;
