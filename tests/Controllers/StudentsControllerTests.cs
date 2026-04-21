@@ -49,16 +49,17 @@ public class StudentsControllerTests
     {
         // Arrange
         var studentService = new Mock<IStudentService> ();
+        var studentId = Guid.NewGuid();
 
         var storedStudent = new Student
         {
-            Id = 0,
+            Id = studentId,
             FirstName = "Bob",
             LastName = "Iglesias"
         };
 
         studentService
-            .Setup (s => s.GetStudent (0))
+            .Setup (s => s.GetStudent (studentId))
             .ReturnsAsync (() => storedStudent);
 
         studentService
@@ -70,22 +71,22 @@ public class StudentsControllerTests
             })
             .ReturnsAsync (true);
 
-        var controller = new StudentsController (studentService.Object);
+        var controller = new StudentsController (studentService.Object, new CreateStudentDTOValidator(), NullLogger<StudentsController>.Instance);
 
         var updateStudent = new Student
         {
-            Id = 0,
+            Id = studentId,
             FirstName = updatedFirstName,
             LastName = updatedLastName
         };
 
         // Act
         await controller.UpdateStudent (updateStudent);
-        var result = await controller.GetStudent (0);
+        var result = await controller.GetStudent (studentId);
 
         // Assert
         Assert.NotNull (result.Value);
-        Assert.Equal (0, result.Value.Id);
+        Assert.Equal (studentId, result.Value.Id);
         Assert.Equal (updatedFirstName, result.Value.FirstName);
         Assert.Equal (updatedLastName, result.Value.LastName);
     }
