@@ -64,4 +64,15 @@ public class MongoVideoService{
         FilterDefinition<GridFSFileInfo> filter = Builders<GridFSFileInfo>.Filter.Empty;
         return GetVideoUrlsAsync(filter);
     }
+    public async Task DeleteVideosByAssignmentIdAsync(string assignmentId){
+        FilterDefinition<GridFSFileInfo> filter =
+            Builders<GridFSFileInfo>.Filter.AnyEq("metadata.assignmentIds", assignmentId);
+
+        IAsyncCursor<GridFSFileInfo> cursor = await _gridFS.FindAsync(filter);
+        List<GridFSFileInfo> files = await cursor.ToListAsync();
+
+        foreach (GridFSFileInfo file in files){
+            await _gridFS.DeleteAsync(file.Id);
+        }
+    }
 }

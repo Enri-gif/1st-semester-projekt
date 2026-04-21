@@ -104,5 +104,14 @@ namespace api.Controllers
                 newAssignment
             );
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAssignment(Guid id){
+            bool deleted = await _assignmentservice.DeleteAssignment(id);
+
+            if (!deleted)
+                return NotFound();
+
+            return NoContent();
+        }
     }
 }
