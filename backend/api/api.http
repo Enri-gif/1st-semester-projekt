@@ -1,11 +1,11 @@
-@api_HostAddress = https://localhost:5000
+@api_HostAddress = https://localhost:5000/api
 
-GET {{api_HostAddress}}/api/assignment
+GET {{api_HostAddress}}/assignment
 Accept: application/json
 
 ###
 
-POST {{api_HostAddress}}/api/assignment
+POST {{api_HostAddress}}/assignment
 
 Answer:postanswer
 Topic:postTopic
@@ -19,3 +19,9 @@ Number:3
 Images: @"./testImg/Sk%C3%A6rmbillede%202026-03-04%20083548.png"
 Images: @"./testImg/Sk%C3%A6rmbillede%202026-03-04%20083714.png"
 ###
+
+GET {{api_HostAddress}}/video
+Accept: application/json
+
+###
+
