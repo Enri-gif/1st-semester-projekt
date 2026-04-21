@@ -42,8 +42,11 @@ public class AuthController : ControllerBase
             }
 
             var token = await tokenService.CreateToken (user);
-            Console.WriteLine ($"{0} - Succesful Login for {user}", "AuthController");
-            return Ok (new LoginResult { Token = token });
+            var roles = await userManager.GetRolesAsync (user);
+            var firstRole = roles.FirstOrDefault();
+            
+            Console.WriteLine ($"{0} - Succesful Login for {user}, {firstRole}", "AuthController");
+            return Ok (new LoginResult { Token = token, Role = firstRole ?? "" });
         }
         catch (Exception ex)
         {
@@ -52,3 +55,4 @@ public class AuthController : ControllerBase
         }
     }
 }
+

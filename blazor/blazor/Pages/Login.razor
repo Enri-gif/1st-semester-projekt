@@ -1,6 +1,7 @@
 ﻿@page "/login"
 @inject HttpClient Http
 @inject IAuthService AuthService
+@inject NavigationManager NavManager
 @using Shared.Authorization
 @using blazor.Services
 
@@ -26,12 +27,26 @@
             if (result != null)
             {
                 AuthService.SetToken(result.Token);
-                message = "Login successful!";
+
+                var target = result.Role switch
+                {
+                    "Admin" => "/teacher-dashboard",
+                    "Teacher" => "/teacher-dashboard",
+                    "Student" => "/student-dashboard",
+                    _ => "/home"
+                };
+
+                message = $"Login lykkedes! Omdirigerer automatisk, vent venligst et øjeblik...";
+                StateHasChanged();
+
+                await Task.Delay(3000);
+
+                NavManager.NavigateTo(target);
             }
         }
         else
         {
-            message = "Login failed!";
+            message = "Login fejlede. Prøv igen.";
         }
     }
 }
