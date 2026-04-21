@@ -90,7 +90,18 @@ if (builder.Configuration.GetValue("SeedDatabase", false))
 {
     using var scope = app.Services.CreateScope();
     var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder>();
-    await seeder.SeedAsync();
+    var startupLogger = scope.ServiceProvider.GetRequiredService<ILogger<DbSeeder>>();
+    try
+    {
+        await seeder.SeedAsync();
+    }
+    catch (Exception ex)
+    {
+        // Don't hard-fail the API boot if the DB is unavailable (e.g. docker
+        // not started yet). Log and continue; endpoints that need the DB
+        // will surface a clearer error per request.
+        startupLogger.LogError(ex, "Database seeding failed; continuing startup without seed data.");
+    }
 }
 
 if (app.Environment.IsDevelopment())

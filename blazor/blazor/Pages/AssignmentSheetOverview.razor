@@ -4,10 +4,16 @@
 @using System.Net.Http.Json
 @attribute [Authorize(Roles = Roles.Teacher)]
 @inject HttpClient Http
+@inject IJSRuntime JS
 
 <PageTitle>Opgavesæt oversigt</PageTitle>
 
 <h1>Opgavesæt oversigt</h1>
+
+@if (!string.IsNullOrEmpty(status))
+{
+    <p>@status</p>
+}
 
 @if (loading)
 {
@@ -21,7 +27,10 @@ else
 {
     <table class="result-table">
         <thead>
-            <tr><th>Titel</th><th>Fag</th><th>Niveau</th><th>År</th><th>Ejer</th></tr>
+            <tr>
+                <th>Titel</th><th>Fag</th><th>Niveau</th><th>År</th><th>Ejer</th>
+                <th>Regneark</th><th>Retteark</th><th>Hold-zip</th><th>Point</th><th>Slet</th>
+            </tr>
         </thead>
         <tbody>
         @foreach (var s in sheets)
@@ -32,7 +41,24 @@ else
                 <td>@s.Level</td>
                 <td>@s.Year</td>
                 <td>@s.Owner</td>
+                <td><button @onclick="() => DownloadSpreadsheet(s, marking: false)">Hent</button></td>
+                <td><button @onclick="() => DownloadSpreadsheet(s, marking: true)">Hent</button></td>
+                <td>
+                    <input placeholder="Hold" @bind="classInput[s.Id]" style="width: 80px" />
+                    <button @onclick="() => DownloadClassZip(s)">ZIP</button>
+                </td>
+                <td><button @onclick="() => ShowPoints(s)">Vis</button></td>
+                <td><button class="delete-button" @onclick="() => DeleteSheet(s)">Slet</button></td>
             </tr>
+            @if (pointsBreakdowns.TryGetValue(s.Id, out var points))
+            {
+                <tr>
+                    <td colspan="10">
+                        <strong>Total: @points.TotalPoints</strong> —
+                        @string.Join(", ", points.PerAssignment.Select(p => $"#{p.Number}: {p.Points}p"))
+                    </td>
+                </tr>
+            }
         }
         </tbody>
     </table>
@@ -40,23 +66,100 @@ else
 
 @code {
     private List<AssignmentSheetSummary> sheets = new();
+    private readonly Dictionary<Guid, string> classInput = new();
+    private readonly Dictionary<Guid, AssignmentSheetPointsDto> pointsBreakdowns = new();
     private bool loading = true;
+    private string status = "";
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
     {
+        loading = true;
         try
         {
-            sheets = await Http.GetFromJsonAsync<List<AssignmentSheetSummary>>("api/assignmentsheet")
-                     ?? new();
+            sheets = await Http.GetFromJsonAsync<List<AssignmentSheetSummary>>("api/assignmentsheet") ?? new();
+            foreach (var s in sheets)
+            {
+                classInput.TryAdd(s.Id, "");
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to load sheets: {ex.Message}");
+            status = $"Kunne ikke hente opgavesæt: {ex.Message}";
         }
         finally
         {
             loading = false;
         }
+    }
+
+    private async Task DownloadSpreadsheet(AssignmentSheetSummary s, bool marking)
+    {
+        var url = $"api/assignmentsheet/{s.Id}/spreadsheet?marking={marking.ToString().ToLowerInvariant()}";
+        var suffix = marking ? "retteark" : "regneark";
+        await DownloadBinary(url, $"{s.Title}_{suffix}.xlsx");
+    }
+
+    private async Task DownloadClassZip(AssignmentSheetSummary s)
+    {
+        if (!classInput.TryGetValue(s.Id, out var className) || string.IsNullOrWhiteSpace(className))
+        {
+            status = "Angiv holdnavn først.";
+            return;
+        }
+        await DownloadBinary(
+            $"api/assignmentsheet/{s.Id}/spreadsheet/class/{Uri.EscapeDataString(className)}",
+            $"{s.Title}_{className}_retteark.zip");
+    }
+
+    private async Task DownloadBinary(string url, string fileName)
+    {
+        try
+        {
+            var response = await Http.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+            {
+                status = $"Download fejlede ({(int)response.StatusCode}) for {fileName}.";
+                return;
+            }
+
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+            using var stream = new MemoryStream(bytes);
+            using var streamRef = new DotNetStreamReference(stream);
+            await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+            status = $"{fileName} klar.";
+        }
+        catch (Exception ex)
+        {
+            status = $"Download fejlede: {ex.Message}";
+        }
+    }
+
+    private async Task ShowPoints(AssignmentSheetSummary s)
+    {
+        if (pointsBreakdowns.Remove(s.Id)) return;
+        try
+        {
+            var dto = await Http.GetFromJsonAsync<AssignmentSheetPointsDto>($"api/assignmentsheet/{s.Id}/points");
+            if (dto is not null)
+            {
+                pointsBreakdowns[s.Id] = dto;
+            }
+        }
+        catch (Exception ex)
+        {
+            status = $"Kunne ikke hente point: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteSheet(AssignmentSheetSummary s)
+    {
+        var response = await Http.DeleteAsync($"api/assignmentsheet/{s.Id}");
+        status = response.IsSuccessStatusCode
+            ? $"Opgavesæt '{s.Title}' slettet."
+            : $"Sletning fejlede ({(int)response.StatusCode}).";
+        await Load();
     }
 
     public class AssignmentSheetSummary
@@ -67,5 +170,19 @@ else
         public string Level { get; set; } = "";
         public int Year { get; set; }
         public string Owner { get; set; } = "";
+    }
+
+    public class AssignmentSheetPointsDto
+    {
+        public Guid AssignmentSheetId { get; set; }
+        public int TotalPoints { get; set; }
+        public List<AssignmentPointsEntry> PerAssignment { get; set; } = new();
+    }
+
+    public class AssignmentPointsEntry
+    {
+        public Guid AssignmentId { get; set; }
+        public int Number { get; set; }
+        public int Points { get; set; }
     }
 }

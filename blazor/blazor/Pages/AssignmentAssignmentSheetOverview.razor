@@ -1,64 +1,115 @@
 @page "/assignment-assignment-sheet-overview"
+@using Shared
+@using blazor.models
+@using System.Net.Http.Json
+@attribute [Authorize(Roles = Roles.Teacher)]
+@inject HttpClient Http
 
 <h1 class="title">Opgave & Opgavesæt oversigt</h1>
 
+@if (!string.IsNullOrEmpty(status))
+{
+    <p>@status</p>
+}
+
 <div class="container">
 
-    <!-- Opgavesæt -->
     <div class="column">
-        <button class="top-button">Liste af Opgavesæt</button>
+        <button class="top-button">Liste af Opgavesæt (@sheets.Count)</button>
 
         <div class="box">
-            @* TODO: Indsæt opgavesæt fra database her *@
-            @foreach (var sæt in Opgavesæt)
+            @foreach (var s in sheets)
             {
-                <div class="item @(selectedOpgavesæt.Contains(sæt) ? "selected" : "")"
-                     @onclick="() => ToggleOpgavesæt(sæt)">
-                    @sæt
+                <div class="item @(selectedSheetId == s.Id ? "selected" : "")"
+                     @onclick="() => selectedSheetId = s.Id"
+                     @key="s.Id">
+                    @s.Title — @s.Subject (@s.Year)
                 </div>
             }
         </div>
 
-        <button class="delete-button">Slet opgavesæt</button>
+        <button class="delete-button"
+                disabled="@(selectedSheetId is null)"
+                @onclick="DeleteSelectedSheet">
+            Slet opgavesæt
+        </button>
     </div>
 
-    <!-- Opgaver -->
     <div class="column">
-        <button class="top-button">Liste af Opgaver</button>
+        <button class="top-button">Liste af Opgaver (@assignments.Count)</button>
 
         <div class="box">
-            @* TODO: Indsæt opgaver fra database her *@
-            @foreach (var opgave in Opgaver)
+            @foreach (var a in assignments)
             {
-                <div class="item @(selectedOpgaver.Contains(opgave) ? "selected" : "")"
-                     @onclick="() => ToggleOpgave(opgave)">
-                    @opgave
+                <div class="item @(selectedAssignmentId == a.Id ? "selected" : "")"
+                     @onclick="() => selectedAssignmentId = a.Id"
+                     @key="a.Id">
+                    @a.Subject — @a.Topic (Opgave @a.Number)
                 </div>
             }
         </div>
 
-        <button class="delete-button">Slet opgave</button>
+        <button class="delete-button"
+                disabled="@(selectedAssignmentId is null)"
+                @onclick="DeleteSelectedAssignment">
+            Slet opgave
+        </button>
     </div>
 
 </div>
 
 @code {
-    // Midlertidig data (erstattes senere af API)
-    private List<string> Opgavesæt = new() { "Opgavesæt 1", "Opgavesæt 2", "Opgavesæt 3" };
-    private List<string> Opgaver = new() { "Opgave 1", "Opgave 2", "Opgave 3" };
+    private List<AssignmentSheetSummary> sheets = new();
+    private List<Assignment> assignments = new();
+    private Guid? selectedSheetId;
+    private Guid? selectedAssignmentId;
+    private string status = "";
 
-    private HashSet<string> selectedOpgavesæt = new();
-    private HashSet<string> selectedOpgaver = new();
+    protected override async Task OnInitializedAsync() => await LoadAll();
 
-    private void ToggleOpgavesæt(string sæt)
+    private async Task LoadAll()
     {
-        if (!selectedOpgavesæt.Add(sæt))
-            selectedOpgavesæt.Remove(sæt);
+        try
+        {
+            sheets = await Http.GetFromJsonAsync<List<AssignmentSheetSummary>>("api/assignmentsheet") ?? new();
+            var paged = await Http.GetFromJsonAsync<PagedResult<Assignment>>("api/assignment?pageSize=100");
+            assignments = paged?.Items ?? new();
+        }
+        catch (Exception ex)
+        {
+            status = $"Indlæsning fejlede: {ex.Message}";
+        }
     }
 
-    private void ToggleOpgave(string opgave)
+    private async Task DeleteSelectedSheet()
     {
-        if (!selectedOpgaver.Add(opgave))
-            selectedOpgaver.Remove(opgave);
+        if (selectedSheetId is null) return;
+        var response = await Http.DeleteAsync($"api/assignmentsheet/{selectedSheetId}");
+        status = response.IsSuccessStatusCode
+            ? "Opgavesæt slettet."
+            : $"Sletning fejlede: {(int)response.StatusCode}";
+        selectedSheetId = null;
+        await LoadAll();
+    }
+
+    private async Task DeleteSelectedAssignment()
+    {
+        if (selectedAssignmentId is null) return;
+        var response = await Http.DeleteAsync($"api/assignment/{selectedAssignmentId}");
+        status = response.IsSuccessStatusCode
+            ? "Opgave slettet."
+            : $"Sletning fejlede: {(int)response.StatusCode}";
+        selectedAssignmentId = null;
+        await LoadAll();
+    }
+
+    public class AssignmentSheetSummary
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = "";
+        public string Subject { get; set; } = "";
+        public string Level { get; set; } = "";
+        public int Year { get; set; }
+        public string Owner { get; set; } = "";
     }
 }

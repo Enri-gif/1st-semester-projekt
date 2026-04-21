@@ -1,109 +1,119 @@
 @page "/assignments-student"
+@using Shared
+@using blazor.models
+@using System.Net.Http.Json
+@attribute [Authorize(Roles = Roles.Student)]
+@inject HttpClient Http
 
 <h1 class="title">Besvarelse</h1>
 
+@if (assignments.Count == 0)
+{
+    <p>Ingen opgaver fundet.</p>
+}
+
 <div class="container">
-
-    <!-- Opgave 1 -->
-    <div class="opgave-block">
-
-        <div class="opgave-header">
-            <span>Opgave 1a</span>
-        </div>
-
-        <div class="opgave-box"></div>
-
-    <div class="opgave-actions">
-        <input type="text"
-            placeholder="Vurdering"
-            @bind="elevVurdering1"
-            disabled="@isLocked1" />
-
-        <button @onclick="() => VisLaerer(1)"
-            disabled="@string.IsNullOrWhiteSpace(elevVurdering1)">
-            @(IsVisible(1) ? "Vurdering vist" : "Se vurdering")
-        </button>
-
-        <button @onclick="() => SeVideo(1)">
-            Se video
-        </button>
-    </div>
-
-        @if (IsVisible(1))
-        {
-            <div class="laerer-box">
-                <div>Lærers Vurdering</div>
-                <input type="text" value="Godkendt" disabled />
-
-                <div>Lærers Kommentar</div>
-                <input type="text" value="Flot arbejde" disabled />
+    @foreach (var a in assignments)
+    {
+        var state = GetState(a.Id);
+        <div class="opgave-block">
+            <div class="opgave-header">
+                <span>@a.Subject — @a.Topic (Opgave @a.Number, max @a.Points p.)</span>
             </div>
-        }
 
-    </div>
+            <div class="opgave-box">@a.Answer</div>
 
-    <!-- Opgave 2 -->
-    <div class="opgave-block">
+            <div class="opgave-actions">
+                <input type="number"
+                       min="0"
+                       max="@a.Points"
+                       placeholder="Dine point"
+                       @bind="state.StudentPoints"
+                       disabled="@state.Revealed" />
 
-        <div class="opgave-header">
-            <span>Opgave 2a</span>
-        </div>
-
-        <div class="opgave-box"></div>
-
-    <div class="opgave-actions">
-        <input type="text"
-            placeholder="Vurdering"
-            @bind="elevVurdering2"
-            disabled="@isLocked2" />
-
-        <button @onclick="() => VisLaerer(2)"
-            disabled="@string.IsNullOrWhiteSpace(elevVurdering2)">
-            @(IsVisible(2) ? "Vurdering vist" : "Se vurdering")
-        </button>
-
-        <button @onclick="() => SeVideo(2)">
-            Se video
-        </button>
-    </div>
-
-        @if (IsVisible(2))
-        {
-            <div class="laerer-box">
-                <div>Lærers Vurdering</div>
-                <input type="text" value="Ikke godkendt" disabled />
-
-                <div>Lærers Kommentar</div>
-                <input type="text" value="Prøv igen" disabled />
+                <button @onclick="() => CheckEvaluation(a)"
+                        disabled="@(state.StudentPoints == null || state.Revealed)">
+                    @(state.Revealed ? "Vurdering vist" : "Se vurdering")
+                </button>
             </div>
-        }
 
-    </div>
-
+            @if (state.Revealed)
+            {
+                <div class="laerer-box">
+                    <div>Lærers vurdering</div>
+                    <input type="text" value="@state.TeacherEvaluation" disabled />
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(state.Message))
+            {
+                <div class="laerer-box"><em>@state.Message</em></div>
+            }
+        </div>
+    }
 </div>
 
 @code {
-    private string elevVurdering1 = "";
-    private string elevVurdering2 = "";
+    private List<Assignment> assignments = new();
+    private readonly Dictionary<Guid, EvaluationState> states = new();
 
-    private HashSet<int> visible = new();
-
-    private bool isLocked1 = false;
-    private bool isLocked2 = false;
-
-    private void VisLaerer(int id)
+    protected override async Task OnInitializedAsync()
     {
-        visible.Add(id);
-
-        if (id == 1) isLocked1 = true;
-        if (id == 2) isLocked2 = true;
+        try
+        {
+            var paged = await Http.GetFromJsonAsync<PagedResult<Assignment>>("api/assignment?pageSize=50");
+            assignments = paged?.Items ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load assignments: {ex.Message}");
+        }
     }
 
-    private void SeVideo(int id)
+    private EvaluationState GetState(Guid id)
     {
-        // Placeholder for video functionality
-        Console.WriteLine($"Se video for opgave {id}");
+        if (!states.TryGetValue(id, out var s))
+        {
+            s = new EvaluationState();
+            states[id] = s;
+        }
+        return s;
     }
 
-    private bool IsVisible(int id) => visible.Contains(id);
+    private async Task CheckEvaluation(Assignment a)
+    {
+        var state = GetState(a.Id);
+        if (state.StudentPoints is null) return;
+
+        var response = await Http.GetAsync(
+            $"api/studentevaluation/{a.Id}?studentPoints={state.StudentPoints}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var payload = await response.Content.ReadFromJsonAsync<TeacherEvaluationResponse>();
+            state.TeacherEvaluation = payload?.TeacherEvaluation ?? "(ingen kommentar)";
+            state.Revealed = true;
+            state.Message = "";
+        }
+        else if ((int)response.StatusCode == 403)
+        {
+            state.Message = "Du er ikke tæt nok på lærerens vurdering til at se den.";
+        }
+        else
+        {
+            state.Message = $"Fejl: {(int)response.StatusCode}";
+        }
+    }
+
+    private class EvaluationState
+    {
+        public int? StudentPoints { get; set; }
+        public bool Revealed { get; set; }
+        public string TeacherEvaluation { get; set; } = "";
+        public string Message { get; set; } = "";
+    }
+
+    private class TeacherEvaluationResponse
+    {
+        public string TeacherEvaluation { get; set; } = "";
+    }
 }

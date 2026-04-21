@@ -82,8 +82,8 @@
     {
         try
         {
-            assignments = await Http.GetFromJsonAsync<List<Assignment>>("api/assignment")
-                          ?? new List<Assignment>();
+            var paged = await Http.GetFromJsonAsync<PagedResult<Assignment>>("api/assignment?pageSize=100");
+            assignments = paged?.Items ?? new List<Assignment>();
         }
         catch (Exception ex)
         {

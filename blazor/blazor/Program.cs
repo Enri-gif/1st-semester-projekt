@@ -12,9 +12,11 @@ builder.Services.AddScoped<IAuthService, AuthService> ();
 
 builder.Services.AddScoped<AuthenticationStateProvider, ApiAuthStateProvider>();
 
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"]
+                 ?? throw new InvalidOperationException("ApiBaseUrl not configured in appsettings.json");
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri("https://localhost:5000") // backend URL
+    BaseAddress = new Uri(apiBaseUrl)
 });
 
 builder.Services.AddAuthorizationCore();
