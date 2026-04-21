@@ -11,10 +11,16 @@ namespace api.Controllers
 
         private readonly AssignmentService _assignmentservice;
         private readonly MongoImageService _mongoImageService;
+        private AssignmentService service;
 
         public AssignmentController(AssignmentService assignmentservice, MongoImageService mongoImageService){
             _mongoImageService = mongoImageService;
             _assignmentservice = assignmentservice;
+        }
+
+        public AssignmentController(AssignmentService service)
+        {
+            this.service = service;
         }
 
         [HttpGet]
