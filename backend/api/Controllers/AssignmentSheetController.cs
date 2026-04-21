@@ -13,14 +13,14 @@ namespace api.Controllers;
 [Authorize(Roles = Roles.Teacher)]
 public class AssignmentSheetController : ControllerBase
 {
-    private readonly AssignmentSheetService _service;
+    private readonly IAssignmentSheetService _service;
     private readonly SpreadsheetService _spreadsheetService;
     private readonly IStudentService _studentService;
     private readonly IValidator<CreateAssignmentSheetDto> _createValidator;
     private readonly IValidator<UpdateAssignmentSheetDto> _updateValidator;
 
     public AssignmentSheetController(
-        AssignmentSheetService service,
+        IAssignmentSheetService service,
         SpreadsheetService spreadsheetService,
         IStudentService studentService,
         IValidator<CreateAssignmentSheetDto> createValidator,
@@ -34,13 +34,14 @@ public class AssignmentSheetController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<AssignmentSheet>>> GetAssignmentSheets()
+    public async Task<ActionResult<IEnumerable<AssignmentSheetResponseDto>>> GetAssignmentSheets()
     {
-        return Ok(await _service.GetAllAssignmentSheets());
+        var sheets = await _service.GetAllAssignmentSheets();
+        return Ok(sheets.Select(s => s.ToResponse()));
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<AssignmentSheet>> GetAssignmentSheet(Guid id)
+    public async Task<ActionResult<AssignmentSheetResponseDto>> GetAssignmentSheet(Guid id)
     {
         var sheet = await _service.GetAssignmentSheet(id);
         if (sheet == null)
@@ -48,11 +49,11 @@ public class AssignmentSheetController : ControllerBase
             return NotFound();
         }
 
-        return Ok(sheet);
+        return Ok(sheet.ToResponse());
     }
 
     [HttpPost]
-    public async Task<ActionResult<AssignmentSheet>> CreateAssignmentSheet([FromBody] CreateAssignmentSheetDto dto)
+    public async Task<ActionResult<AssignmentSheetResponseDto>> CreateAssignmentSheet([FromBody] CreateAssignmentSheetDto dto)
     {
         var validation = await _createValidator.ValidateAsync(dto);
         if (!validation.IsValid)
@@ -73,7 +74,7 @@ public class AssignmentSheetController : ControllerBase
         };
 
         var created = await _service.CreateAssignmentSheet(sheet);
-        return CreatedAtAction(nameof(GetAssignmentSheet), new { id = created.Id }, created);
+        return CreatedAtAction(nameof(GetAssignmentSheet), new { id = created.Id }, created.ToResponse());
     }
 
     [HttpPut("{id}")]

@@ -5,51 +5,59 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.Services;
 
-public class AssignmentService
+public interface IAssignmentService
 {
-    private readonly ApplicationDbContext _dbcontext;
+    Task<Assignment> Create(Assignment assignment);
+    Task<Assignment?> GetById(Guid id);
+    Task<IEnumerable<Assignment>> GetAll();
+    Task<bool> DeleteAssignment(Guid id);
+    Task<PagedResult<Assignment>> GetFiltered(
+        string? subject,
+        string? level,
+        int? year,
+        string? topic,
+        string? owner,
+        string? tag,
+        Guid? assignmentSheetId,
+        int page,
+        int pageSize,
+        string? sortBy,
+        string? sortDir);
+}
+
+public class AssignmentService : IAssignmentService
+{
+    private readonly IAssignmentRepository _repo;
     private readonly MongoImageService _mongoImageService;
     private readonly MongoVideoService _mongoVideoService;
 
-    public AssignmentService(ApplicationDbContext dbContext, MongoVideoService mongoVideoService, MongoImageService mongoImageService)
+    public AssignmentService(
+        IAssignmentRepository repo,
+        MongoVideoService mongoVideoService,
+        MongoImageService mongoImageService)
     {
-        _dbcontext = dbContext;
+        _repo = repo;
         _mongoImageService = mongoImageService;
         _mongoVideoService = mongoVideoService;
     }
 
-    public async Task<Assignment> Create(Assignment assignment)
-    {
-        _dbcontext.Assignments.Add(assignment);
-        await _dbcontext.SaveChangesAsync(new CancellationToken());
-        return assignment;
-    }
+    public Task<Assignment> Create(Assignment assignment) => _repo.AddAsync(assignment);
 
-    public async Task<Assignment?> GetById(Guid id)
-    {
-        return await _dbcontext.Assignments.FindAsync(id);
-    }
+    public Task<Assignment?> GetById(Guid id) => _repo.GetByIdAsync(id);
 
-    public async Task<IEnumerable<Assignment>> GetAll()
-    {
-        return await _dbcontext.Assignments.AsNoTracking().ToListAsync();
-    }
+    public Task<IEnumerable<Assignment>> GetAll() => _repo.GetAllAsync();
 
     public async Task<bool> DeleteAssignment(Guid id)
     {
-        Assignment? assignment = await _dbcontext.Assignments.FindAsync(id);
+        var assignment = await _repo.GetByIdAsync(id);
         if (assignment == null)
             return false;
 
-        string assignmentId = id.ToString();
-
+        var assignmentId = id.ToString();
         await _mongoImageService.DeleteImagesByAssignmentIdAsync(assignmentId);
         await _mongoVideoService.DeleteVideosByAssignmentIdAsync(assignmentId);
 
-        _dbcontext.Assignments.Remove(assignment);
-        await _dbcontext.SaveChangesAsync();
-
-        return true;
+        return await _repo.RemoveAsync(assignment);
     }
 
     public async Task<PagedResult<Assignment>> GetFiltered(
@@ -69,7 +77,7 @@ public class AssignmentService
         if (pageSize < 1) pageSize = 20;
         if (pageSize > 100) pageSize = 100;
 
-        IQueryable<Assignment> query = _dbcontext.Assignments.AsNoTracking();
+        IQueryable<Assignment> query = _repo.Query();
 
         if (!string.IsNullOrWhiteSpace(subject))
             query = query.Where(a => a.Subject == subject);

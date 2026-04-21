@@ -15,7 +15,8 @@ public class AssignmentServiceTests
             .Options;
 
         var ctx = new ApplicationDbContext(options);
-        return (new AssignmentService(ctx, mongoVideoService: null!, mongoImageService: null!), ctx);
+        var repo = new AssignmentRepository(ctx);
+        return (new AssignmentService(repo, mongoVideoService: null!, mongoImageService: null!), ctx);
     }
 
     [Fact]

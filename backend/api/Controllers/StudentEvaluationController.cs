@@ -12,9 +12,9 @@ public class StudentEvaluationController : ControllerBase
 {
     private const double CloseThresholdFraction = 0.8;
 
-    private readonly AssignmentService _service;
+    private readonly IAssignmentService _service;
 
-    public StudentEvaluationController(AssignmentService service)
+    public StudentEvaluationController(IAssignmentService service)
     {
         _service = service;
     }

@@ -4,7 +4,17 @@ using api.Models;
 
 namespace api.Services;
 
-public class AssignmentSheetService
+public interface IAssignmentSheetService
+{
+    Task<IEnumerable<AssignmentSheet>> GetAllAssignmentSheets();
+    Task<AssignmentSheet?> GetAssignmentSheet(Guid id);
+    Task<AssignmentSheet> CreateAssignmentSheet(AssignmentSheet sheet);
+    Task<bool> UpdateAssignmentSheet(AssignmentSheet sheet);
+    Task<bool> DeleteAssignmentSheet(Guid id);
+    Task<AssignmentSheetPointsDto?> GetPointsBreakdown(Guid sheetId);
+}
+
+public class AssignmentSheetService : IAssignmentSheetService
 {
     private readonly IAssignmentSheetRepository _repo;
 

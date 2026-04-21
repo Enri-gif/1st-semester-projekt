@@ -19,7 +19,8 @@ public class AssignmentControllerTests
             .Options;
 
         context = new ApplicationDbContext(options);
-        var service = new AssignmentService(context, mongoVideoService: null!, mongoImageService: null!);
+        var repo = new AssignmentRepository(context);
+        var service = new AssignmentService(repo, mongoVideoService: null!, mongoImageService: null!);
         return new AssignmentController(service, mongoImageService: null!, new CreateAssignmentDtoValidator());
     }
 
@@ -42,7 +43,7 @@ public class AssignmentControllerTests
         var result = await controller.GetAssignmentById(assignment.Id);
 
         var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-        ok.Value.Should().BeOfType<Assignment>()
+        ok.Value.Should().BeOfType<AssignmentResponseDto>()
             .Which.Id.Should().Be(assignment.Id);
     }
 
@@ -73,7 +74,7 @@ public class AssignmentControllerTests
             page: 1, pageSize: 10, sortBy: "points", sortDir: "desc");
 
         var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-        var paged = ok.Value.Should().BeOfType<PagedResult<Assignment>>().Subject;
+        var paged = ok.Value.Should().BeOfType<PagedResult<AssignmentResponseDto>>().Subject;
         paged.Total.Should().Be(2);
         paged.Items.Should().HaveCount(2);
         paged.Items.First().Points.Should().Be(10);

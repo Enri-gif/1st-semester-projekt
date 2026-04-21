@@ -34,7 +34,7 @@ public class AssignmentSheetControllerTests
         var result = await controller.CreateAssignmentSheet(dto);
 
         var created = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
-        var sheet = created.Value.Should().BeOfType<AssignmentSheet>().Subject;
+        var sheet = created.Value.Should().BeOfType<AssignmentSheetResponseDto>().Subject;
         sheet.Id.Should().NotBe(Guid.Empty);
         sheet.Title.Should().Be("Test");
     }

@@ -13,11 +13,11 @@ namespace api.Controllers;
 [Authorize(Roles = Roles.Teacher)]
 public class AssignmentController : ControllerBase
 {
-    private readonly AssignmentService _service;
+    private readonly IAssignmentService _service;
     private readonly MongoImageService _mongoImageService;
     private readonly IValidator<CreateAssignmentDto> _validator;
 
-    public AssignmentController(AssignmentService service, MongoImageService mongoImageService, IValidator<CreateAssignmentDto> validator)
+    public AssignmentController(IAssignmentService service, MongoImageService mongoImageService, IValidator<CreateAssignmentDto> validator)
     {
         _mongoImageService = mongoImageService;
         _service = service;
@@ -25,7 +25,7 @@ public class AssignmentController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResult<Assignment>>> GetAssignments(
+    public async Task<ActionResult<PagedResult<AssignmentResponseDto>>> GetAssignments(
         [FromQuery] string? subject,
         [FromQuery] string? level,
         [FromQuery] int? year,
@@ -41,7 +41,14 @@ public class AssignmentController : ControllerBase
         var result = await _service.GetFiltered(
             subject, level, year, topic, owner, tag, assignmentSheetId,
             page, pageSize, sortBy, sortDir);
-        return Ok(result);
+
+        return Ok(new PagedResult<AssignmentResponseDto>
+        {
+            Items = result.Items.Select(a => a.ToResponse()).ToList(),
+            Page = result.Page,
+            PageSize = result.PageSize,
+            Total = result.Total
+        });
     }
 
     [HttpGet("with-images")]
@@ -50,12 +57,12 @@ public class AssignmentController : ControllerBase
         var assignments = await _service.GetAll();
         var result = new List<AssignmentImagesDTO>();
 
-        foreach (Assignment assignment in assignments)
+        foreach (var assignment in assignments)
         {
             var images = await _mongoImageService.GetImagesByAssignmentIdAsync(assignment.Id.ToString());
             result.Add(new AssignmentImagesDTO
             {
-                Assignment = assignment,
+                Assignment = assignment.ToResponse(),
                 ImageUrls = images
             });
         }
@@ -64,26 +71,26 @@ public class AssignmentController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Assignment>> GetAssignmentById(Guid id)
+    public async Task<ActionResult<AssignmentResponseDto>> GetAssignmentById(Guid id)
     {
-        Assignment? assignment = await _service.GetById(id);
+        var assignment = await _service.GetById(id);
         if (assignment == null)
             return NotFound();
 
-        return Ok(assignment);
+        return Ok(assignment.ToResponse());
     }
 
     [HttpGet("{id}/with-images")]
     public async Task<ActionResult<AssignmentImagesDTO>> GetAssignmentByIdWithImages(Guid id)
     {
-        Assignment? assignment = await _service.GetById(id);
+        var assignment = await _service.GetById(id);
         if (assignment == null)
             return NotFound();
 
         var images = await _mongoImageService.GetImagesByAssignmentIdAsync(assignment.Id.ToString());
         return Ok(new AssignmentImagesDTO
         {
-            Assignment = assignment,
+            Assignment = assignment.ToResponse(),
             ImageUrls = images
         });
     }
@@ -102,7 +109,7 @@ public class AssignmentController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Assignment>> CreateAssignment(
+    public async Task<ActionResult<AssignmentResponseDto>> CreateAssignment(
         [FromForm] CreateAssignmentDto dto,
         [FromForm] IFormFileCollection? images)
     {
@@ -155,7 +162,7 @@ public class AssignmentController : ControllerBase
         return CreatedAtAction(
             nameof(GetAssignmentById),
             new { id = created.Id },
-            created
+            created.ToResponse()
         );
     }
 

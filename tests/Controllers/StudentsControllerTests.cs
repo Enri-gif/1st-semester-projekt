@@ -34,9 +34,9 @@ public class StudentsControllerTests
 
         var result = await studentCon.CreateStudent(student);
 
-        result.Should().BeOfType<ActionResult<Student>>();
+        result.Should().BeOfType<ActionResult<StudentResponseDto>>();
         var created = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
-        var saved = created.Value.Should().BeOfType<Student>().Subject;
+        var saved = created.Value.Should().BeOfType<StudentResponseDto>().Subject;
         saved.FirstName.Should().Be(student.FirstName);
         saved.LastName.Should().Be(student.LastName);
     }

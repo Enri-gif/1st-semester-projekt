@@ -1,45 +1,42 @@
 using api.Data;
 using api.Models;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace api.Services;
 
 public interface IStudentService
 {
-    Task<Student?> GetStudent (Guid id);
-    Task<bool> AddStudent (Student student);
-    Task<bool> UpdateStudent (Student updateStudent);
-    Task<bool> DeleteStudent (Guid id);
-    Task<IEnumerable<Student>> GetByClass (string className);
+    Task<Student?> GetStudent(Guid id);
+    Task<bool> AddStudent(Student student);
+    Task<bool> UpdateStudent(Student updateStudent);
+    Task<bool> DeleteStudent(Guid id);
+    Task<IEnumerable<Student>> GetByClass(string className);
 }
 
 public class StudentService : IStudentService
 {
-    private readonly ApplicationDbContext dbContext;
+    private readonly IStudentRepository repo;
     private readonly ILogger<StudentService> logger;
 
-    public StudentService (ApplicationDbContext dbContext, ILogger<StudentService> logger)
+    public StudentService(IStudentRepository repo, ILogger<StudentService> logger)
     {
-        this.dbContext = dbContext;
+        this.repo = repo;
         this.logger = logger;
     }
 
-    public async Task<Student?> GetStudent (Guid id)
+    public async Task<Student?> GetStudent(Guid id)
     {
-        var student = await dbContext.Students.FirstOrDefaultAsync (s => s.Id == id);
-
+        var student = await repo.GetByIdAsync(id);
         if (student == null)
         {
             logger.LogInformation("GetStudent: no student found for id {StudentId}", id);
         }
-
         return student;
     }
 
-    public async Task<bool> AddStudent (Student student)
+    public async Task<bool> AddStudent(Student student)
     {
-        if (string.IsNullOrEmpty (student.FirstName))
+        if (string.IsNullOrEmpty(student.FirstName))
         {
             logger.LogWarning("AddStudent rejected: FirstName is empty");
             return false;
@@ -56,17 +53,14 @@ public class StudentService : IStudentService
             student.Id = Guid.NewGuid();
         }
 
-        dbContext.Students.Add (student);
-        await dbContext.SaveChangesAsync ();
-
+        await repo.AddAsync(student);
         logger.LogInformation("AddStudent: saved student {StudentId}", student.Id);
         return true;
     }
 
-    public async Task<bool> UpdateStudent (Student updateStudent)
+    public async Task<bool> UpdateStudent(Student updateStudent)
     {
-        var student = await dbContext.Students.FirstOrDefaultAsync (s => s.Id == updateStudent.Id);
-
+        var student = await repo.GetByIdAsync(updateStudent.Id);
         if (student == null)
         {
             logger.LogInformation("UpdateStudent: no student found for id {StudentId}", updateStudent.Id);
@@ -77,40 +71,23 @@ public class StudentService : IStudentService
         student.LastName = updateStudent.LastName;
         student.Email = updateStudent.Email;
 
-        await dbContext.SaveChangesAsync ();
-
+        await repo.SaveChangesAsync();
         logger.LogInformation("UpdateStudent: updated student {StudentId}", student.Id);
         return true;
     }
 
-    public async Task<IEnumerable<Student>> GetByClass (string className)
+    public Task<IEnumerable<Student>> GetByClass(string className) => repo.GetByClassAsync(className);
+
+    public async Task<bool> DeleteStudent(Guid id)
     {
-        if (string.IsNullOrWhiteSpace(className))
-        {
-            return Array.Empty<Student>();
-        }
-
-        return await dbContext.Students
-            .AsNoTracking()
-            .Where(s => s.StudentClass == className)
-            .OrderBy(s => s.LastName)
-            .ThenBy(s => s.FirstName)
-            .ToListAsync();
-    }
-
-    public async Task<bool> DeleteStudent (Guid id)
-    {
-        var student = await dbContext.Students.FirstOrDefaultAsync (s => s.Id == id);
-
+        var student = await repo.GetByIdAsync(id);
         if (student == null)
         {
             logger.LogInformation("DeleteStudent: no student found for id {StudentId}", id);
             return false;
         }
 
-        dbContext.Students.Remove (student);
-        await dbContext.SaveChangesAsync ();
-
+        await repo.RemoveAsync(student);
         logger.LogInformation("DeleteStudent: deleted student {StudentId}", id);
         return true;
     }

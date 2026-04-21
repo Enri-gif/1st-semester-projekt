@@ -25,7 +25,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Student>> CreateStudent ([FromBody] CreateStudentDTO dto)
+    public async Task<ActionResult<StudentResponseDto>> CreateStudent ([FromBody] CreateStudentDTO dto)
     {
         var validation = await validator.ValidateAsync(dto);
         if (!validation.IsValid)
@@ -63,11 +63,11 @@ public class StudentsController : ControllerBase
 
         logger.LogInformation("Created student {StudentId} ({FirstName})", student.Id, student.FirstName);
 
-        return CreatedAtAction (nameof (GetStudent), new { id = student.Id }, student);
+        return CreatedAtAction (nameof (GetStudent), new { id = student.Id }, student.ToResponse());
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Student>>> GetStudents ([FromQuery(Name = "class")] string? className)
+    public async Task<ActionResult<IEnumerable<StudentResponseDto>>> GetStudents ([FromQuery(Name = "class")] string? className)
     {
         if (string.IsNullOrWhiteSpace(className))
         {
@@ -75,11 +75,11 @@ public class StudentsController : ControllerBase
         }
 
         var students = await studentService.GetByClass(className);
-        return Ok(students);
+        return Ok(students.Select(s => s.ToResponse()));
     }
 
     [HttpGet ("{id}")]
-    public async Task<ActionResult<Student>> GetStudent (Guid id)
+    public async Task<ActionResult<StudentResponseDto>> GetStudent (Guid id)
     {
         var student = await studentService.GetStudent (id);
 
@@ -91,7 +91,7 @@ public class StudentsController : ControllerBase
 
         logger.LogDebug("Found student {StudentId}", id);
 
-        return student;
+        return student.ToResponse();
     }
 
     [HttpPut()]
