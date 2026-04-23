@@ -46,7 +46,7 @@ else
 }
 
 @code {
-    private StatisticsDto? stats;
+    private StatisticsDTO? stats;
     private bool loading = true;
 
     private static readonly string[] Palette =
@@ -59,7 +59,7 @@ else
     {
         try
         {
-            stats = await Http.GetFromJsonAsync<StatisticsDto>("api/statistics/summary");
+            stats = await Http.GetFromJsonAsync<StatisticsDTO>("api/statistics/summary");
         }
         catch (Exception ex)
         {

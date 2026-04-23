@@ -12,17 +12,17 @@ public class StudentEvaluationController : ControllerBase
 {
     private const double CloseThresholdFraction = 0.8;
 
-    private readonly IAssignmentService _service;
+    private readonly IAssignmentService _assignmentService;
 
-    public StudentEvaluationController(IAssignmentService service)
+    public StudentEvaluationController(IAssignmentService assignmentService)
     {
-        _service = service;
+        _assignmentService = assignmentService;
     }
 
     [HttpGet("{assignmentId}")]
     public async Task<ActionResult<string>> GetEvaluation(Guid assignmentId, [FromQuery] int studentPoints)
     {
-        var assignment = await _service.GetById(assignmentId);
+        var assignment = await _assignmentService.GetById(assignmentId);
         if (assignment == null)
         {
             return NotFound();

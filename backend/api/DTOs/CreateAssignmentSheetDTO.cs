@@ -1,19 +1,18 @@
 using System.ComponentModel.DataAnnotations;
+using api.Models;
 
-namespace api.Models;
+namespace api.DTOs;
 
-public class AssignmentSheet
+public class CreateAssignmentSheetDTO
 {
-    [Key]
-    public Guid Id { get; init; }
+    [Required]
     public string Title { get; set; } = "";
     public string Subject { get; set; } = "";
     public string Level { get; set; } = "";
     public int Year { get; set; } = DateTime.Today.Year;
     public string Owner { get; set; } = "Prøvebank";
     public AssignmentSheetType Type { get; set; } = AssignmentSheetType.Hjemmeopgave;
-    public List<Assignment> Assignments { get; set; } = new List<Assignment>();
 
-    [Timestamp]
-    public byte[]? RowVersion { get; set; }
+    // Optional: IDs of existing assignments to include in the new sheet.
+    public List<Guid> AssignmentIds { get; set; } = new();
 }

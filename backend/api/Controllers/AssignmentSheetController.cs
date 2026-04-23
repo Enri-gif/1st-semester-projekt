@@ -13,37 +13,40 @@ namespace api.Controllers;
 [Authorize(Roles = Roles.Teacher)]
 public class AssignmentSheetController : ControllerBase
 {
-    private readonly IAssignmentSheetService _service;
+    private readonly IAssignmentSheetService _assignmentSheetService;
     private readonly SpreadsheetService _spreadsheetService;
+    private readonly IAssignmentSheetPdfService _pdfService;
     private readonly IStudentService _studentService;
-    private readonly IValidator<CreateAssignmentSheetDto> _createValidator;
-    private readonly IValidator<UpdateAssignmentSheetDto> _updateValidator;
+    private readonly IValidator<CreateAssignmentSheetDTO> _createValidator;
+    private readonly IValidator<UpdateAssignmentSheetDTO> _updateValidator;
 
     public AssignmentSheetController(
-        IAssignmentSheetService service,
+        IAssignmentSheetService assignmentSheetService,
         SpreadsheetService spreadsheetService,
+        IAssignmentSheetPdfService pdfService,
         IStudentService studentService,
-        IValidator<CreateAssignmentSheetDto> createValidator,
-        IValidator<UpdateAssignmentSheetDto> updateValidator)
+        IValidator<CreateAssignmentSheetDTO> createValidator,
+        IValidator<UpdateAssignmentSheetDTO> updateValidator)
     {
-        _service = service;
+        _assignmentSheetService = assignmentSheetService;
         _spreadsheetService = spreadsheetService;
+        _pdfService = pdfService;
         _studentService = studentService;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<AssignmentSheetResponseDto>>> GetAssignmentSheets()
+    public async Task<ActionResult<IEnumerable<AssignmentSheetResponseDTO>>> GetAssignmentSheets()
     {
-        var sheets = await _service.GetAllAssignmentSheets();
+        var sheets = await _assignmentSheetService.GetAllAssignmentSheets();
         return Ok(sheets.Select(s => s.ToResponse()));
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<AssignmentSheetResponseDto>> GetAssignmentSheet(Guid id)
+    public async Task<ActionResult<AssignmentSheetResponseDTO>> GetAssignmentSheet(Guid id)
     {
-        var sheet = await _service.GetAssignmentSheet(id);
+        var sheet = await _assignmentSheetService.GetAssignmentSheet(id);
         if (sheet == null)
         {
             return NotFound();
@@ -53,7 +56,7 @@ public class AssignmentSheetController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<AssignmentSheetResponseDto>> CreateAssignmentSheet([FromBody] CreateAssignmentSheetDto dto)
+    public async Task<ActionResult<AssignmentSheetResponseDTO>> CreateAssignmentSheet([FromBody] CreateAssignmentSheetDTO dto)
     {
         var validation = await _createValidator.ValidateAsync(dto);
         if (!validation.IsValid)
@@ -70,15 +73,16 @@ public class AssignmentSheetController : ControllerBase
             Subject = dto.Subject,
             Level = dto.Level,
             Year = dto.Year,
-            Owner = dto.Owner
+            Owner = string.IsNullOrWhiteSpace(dto.Owner) ? "Prøvebank" : dto.Owner,
+            Type = dto.Type
         };
 
-        var created = await _service.CreateAssignmentSheet(sheet);
+        var created = await _assignmentSheetService.CreateAssignmentSheet(sheet, dto.AssignmentIds);
         return CreatedAtAction(nameof(GetAssignmentSheet), new { id = created.Id }, created.ToResponse());
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult> UpdateAssignmentSheet(Guid id, [FromBody] UpdateAssignmentSheetDto dto)
+    public async Task<ActionResult> UpdateAssignmentSheet(Guid id, [FromBody] UpdateAssignmentSheetDTO dto)
     {
         var validation = await _updateValidator.ValidateAsync(dto);
         if (!validation.IsValid)
@@ -95,10 +99,11 @@ public class AssignmentSheetController : ControllerBase
             Subject = dto.Subject,
             Level = dto.Level,
             Year = dto.Year,
-            Owner = dto.Owner
+            Owner = string.IsNullOrWhiteSpace(dto.Owner) ? "Prøvebank" : dto.Owner,
+            Type = dto.Type
         };
 
-        var updated = await _service.UpdateAssignmentSheet(sheet);
+        var updated = await _assignmentSheetService.UpdateAssignmentSheet(sheet, dto.AssignmentIds);
         if (!updated)
         {
             return NotFound();
@@ -110,7 +115,7 @@ public class AssignmentSheetController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteAssignmentSheet(Guid id)
     {
-        var deleted = await _service.DeleteAssignmentSheet(id);
+        var deleted = await _assignmentSheetService.DeleteAssignmentSheet(id);
         if (!deleted)
         {
             return NotFound();
@@ -120,9 +125,9 @@ public class AssignmentSheetController : ControllerBase
     }
 
     [HttpGet("{id}/points")]
-    public async Task<ActionResult<AssignmentSheetPointsDto>> GetPointsBreakdown(Guid id)
+    public async Task<ActionResult<AssignmentSheetPointsDTO>> GetPointsBreakdown(Guid id)
     {
-        var breakdown = await _service.GetPointsBreakdown(id);
+        var breakdown = await _assignmentSheetService.GetPointsBreakdown(id);
         if (breakdown == null)
         {
             return NotFound();
@@ -134,7 +139,7 @@ public class AssignmentSheetController : ControllerBase
     [HttpGet("{id}/spreadsheet")]
     public async Task<IActionResult> GetSpreadsheet(Guid id, [FromQuery] bool marking = false)
     {
-        var sheet = await _service.GetAssignmentSheet(id);
+        var sheet = await _assignmentSheetService.GetAssignmentSheet(id);
         if (sheet == null)
         {
             return NotFound();
@@ -150,10 +155,24 @@ public class AssignmentSheetController : ControllerBase
             filename);
     }
 
+    [HttpGet("{id}/pdf")]
+    public async Task<IActionResult> GetPdf(Guid id)
+    {
+        var sheet = await _assignmentSheetService.GetAssignmentSheet(id);
+        if (sheet == null)
+        {
+            return NotFound();
+        }
+
+        var bytes = _pdfService.GenerateAssignmentSheetPdf(sheet);
+        var safeTitle = string.IsNullOrWhiteSpace(sheet.Title) ? "opgavesaet" : sheet.Title;
+        return File(bytes, "application/pdf", $"{safeTitle}.pdf");
+    }
+
     [HttpGet("{id}/spreadsheet/class/{className}")]
     public async Task<IActionResult> GetClassMarkingSheets(Guid id, string className)
     {
-        var sheet = await _service.GetAssignmentSheet(id);
+        var sheet = await _assignmentSheetService.GetAssignmentSheet(id);
         if (sheet == null)
         {
             return NotFound(new { message = "Assignment sheet not found." });

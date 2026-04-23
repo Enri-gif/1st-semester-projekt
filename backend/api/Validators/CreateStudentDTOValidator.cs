@@ -15,27 +15,27 @@ public class CreateStudentDTOValidator : AbstractValidator<CreateStudentDTO>
     }
 }
 
-public class CreateAssignmentSheetDtoValidator : AbstractValidator<CreateAssignmentSheetDto>
+public class CreateAssignmentSheetDTOValidator : AbstractValidator<CreateAssignmentSheetDTO>
 {
-    public CreateAssignmentSheetDtoValidator()
+    public CreateAssignmentSheetDTOValidator()
     {
         RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Year).InclusiveBetween(1900, 2100);
     }
 }
 
-public class UpdateAssignmentSheetDtoValidator : AbstractValidator<UpdateAssignmentSheetDto>
+public class UpdateAssignmentSheetDTOValidator : AbstractValidator<UpdateAssignmentSheetDTO>
 {
-    public UpdateAssignmentSheetDtoValidator()
+    public UpdateAssignmentSheetDTOValidator()
     {
         RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Year).InclusiveBetween(1900, 2100);
     }
 }
 
-public class CreateAssignmentDtoValidator : AbstractValidator<CreateAssignmentDto>
+public class CreateAssignmentDTOValidator : AbstractValidator<CreateAssignmentDTO>
 {
-    public CreateAssignmentDtoValidator()
+    public CreateAssignmentDTOValidator()
     {
         RuleFor(x => x.Subject).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Year).InclusiveBetween(1900, 2100);

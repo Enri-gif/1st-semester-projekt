@@ -4,23 +4,15 @@ using api.Models;
 
 namespace api.Services;
 
-public interface IAssignmentSheetService
-{
-    Task<IEnumerable<AssignmentSheet>> GetAllAssignmentSheets();
-    Task<AssignmentSheet?> GetAssignmentSheet(Guid id);
-    Task<AssignmentSheet> CreateAssignmentSheet(AssignmentSheet sheet);
-    Task<bool> UpdateAssignmentSheet(AssignmentSheet sheet);
-    Task<bool> DeleteAssignmentSheet(Guid id);
-    Task<AssignmentSheetPointsDto?> GetPointsBreakdown(Guid sheetId);
-}
-
 public class AssignmentSheetService : IAssignmentSheetService
 {
     private readonly IAssignmentSheetRepository _repo;
+    private readonly IAssignmentRepository _assignmentRepo;
 
-    public AssignmentSheetService(IAssignmentSheetRepository repo)
+    public AssignmentSheetService(IAssignmentSheetRepository repo, IAssignmentRepository assignmentRepo)
     {
         _repo = repo;
+        _assignmentRepo = assignmentRepo;
     }
 
     public async Task<IEnumerable<AssignmentSheet>> GetAllAssignmentSheets()
@@ -33,14 +25,32 @@ public class AssignmentSheetService : IAssignmentSheetService
         return await _repo.GetByIdAsync(id);
     }
 
-    public async Task<AssignmentSheet> CreateAssignmentSheet(AssignmentSheet sheet)
+    public async Task<AssignmentSheet> CreateAssignmentSheet(AssignmentSheet sheet, IEnumerable<Guid>? assignmentIds = null)
     {
-        return await _repo.CreateAsync(sheet);
+        var created = await _repo.CreateAsync(sheet);
+
+        if (assignmentIds != null)
+        {
+            await _repo.SetAssignmentsAsync(created.Id, assignmentIds);
+        }
+
+        return created;
     }
 
-    public async Task<bool> UpdateAssignmentSheet(AssignmentSheet sheet)
+    public async Task<bool> UpdateAssignmentSheet(AssignmentSheet sheet, IEnumerable<Guid>? assignmentIds = null)
     {
-        return await _repo.UpdateAsync(sheet);
+        var updated = await _repo.UpdateAsync(sheet);
+        if (!updated)
+        {
+            return false;
+        }
+
+        if (assignmentIds != null)
+        {
+            await _repo.SetAssignmentsAsync(sheet.Id, assignmentIds);
+        }
+
+        return true;
     }
 
     public async Task<bool> DeleteAssignmentSheet(Guid id)
@@ -48,7 +58,7 @@ public class AssignmentSheetService : IAssignmentSheetService
         return await _repo.DeleteAsync(id);
     }
 
-    public async Task<AssignmentSheetPointsDto?> GetPointsBreakdown(Guid sheetId)
+    public async Task<AssignmentSheetPointsDTO?> GetPointsBreakdown(Guid sheetId)
     {
         var sheet = await _repo.GetByIdAsync(sheetId);
         if (sheet == null)
@@ -57,7 +67,7 @@ public class AssignmentSheetService : IAssignmentSheetService
         }
 
         var perAssignment = sheet.Assignments
-            .Select(a => new AssignmentPointsDto
+            .Select(a => new AssignmentPointsDTO
             {
                 AssignmentId = a.Id,
                 Number = a.Number,
@@ -65,7 +75,7 @@ public class AssignmentSheetService : IAssignmentSheetService
             })
             .ToList();
 
-        return new AssignmentSheetPointsDto
+        return new AssignmentSheetPointsDTO
         {
             AssignmentSheetId = sheet.Id,
             TotalPoints = perAssignment.Sum(p => p.Points),

@@ -1,6 +1,7 @@
 @page "/create-assignment-sheet"
 @using blazor.models
 @using Shared
+@using System.Net.Http.Json
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @attribute [Authorize(Roles = Roles.Teacher)]
@@ -8,7 +9,6 @@
 <h3>Lav opgavesæt</h3>
 
 <div class="container">
-
     <div class="box">
         <div class="mb-2">
             <label>Titel</label>
@@ -35,6 +35,31 @@
             <input class="form-control" @bind="dto.Owner" />
         </div>
 
+        <div class="mb-2">
+            <label>Type</label>
+            <select class="form-control" @bind="dto.Type">
+                <option value="Hjemmeopgave">Hjemmeopgave</option>
+                <option value="Proeve">Prøve</option>
+            </select>
+        </div>
+
+        <div class="mb-2">
+            <label>Opgaver (vælg de opgaver der skal indgå)</label>
+            <input class="form-control" placeholder="Filter…" @bind="filter" @bind:event="oninput" />
+            <div class="assignment-picker" style="max-height:260px;overflow:auto;border:1px solid #ccc;padding:6px;">
+                @foreach (var a in FilteredAssignments)
+                {
+                    <label style="display:block;">
+                        <input type="checkbox"
+                               checked="@dto.AssignmentIds.Contains(a.Id)"
+                               @onchange="e => ToggleAssignment(a.Id, (bool)e.Value!)" />
+                        @a.Subject — @a.Topic (Opg. @a.Number, @a.Points p.)
+                    </label>
+                }
+            </div>
+            <small>@dto.AssignmentIds.Count valgt</small>
+        </div>
+
         <button class="btn btn-success mt-2"
                 @onclick="SaveAssignmentSheet"
                 disabled="@string.IsNullOrWhiteSpace(dto.Title)">
@@ -46,12 +71,45 @@
             <p class="mt-2">@status</p>
         }
     </div>
-
 </div>
 
 @code {
-    private CreateAssignmentSheetDto dto = new();
+    private CreateAssignmentSheetDTO dto = new();
+    private List<Assignment> assignments = new();
+    private string filter = "";
     private string status = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var paged = await Http.GetFromJsonAsync<PagedResult<Assignment>>("api/assignment?pageSize=200");
+            assignments = paged?.Items ?? new();
+        }
+        catch (Exception ex)
+        {
+            status = $"Kunne ikke hente opgaver: {ex.Message}";
+        }
+    }
+
+    private IEnumerable<Assignment> FilteredAssignments =>
+        string.IsNullOrWhiteSpace(filter)
+            ? assignments
+            : assignments.Where(a =>
+                (a.Subject?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (a.Topic?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    private void ToggleAssignment(Guid id, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!dto.AssignmentIds.Contains(id)) dto.AssignmentIds.Add(id);
+        }
+        else
+        {
+            dto.AssignmentIds.Remove(id);
+        }
+    }
 
     private async Task SaveAssignmentSheet()
     {
@@ -60,7 +118,7 @@
         if (response.IsSuccessStatusCode)
         {
             status = $"Opgavesæt '{dto.Title}' oprettet.";
-            dto = new CreateAssignmentSheetDto();
+            dto = new CreateAssignmentSheetDTO();
             await Task.Delay(1500);
             Navigation.NavigateTo("/assignment-sheet-overview");
         }

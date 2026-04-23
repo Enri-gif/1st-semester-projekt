@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace api.DTOs;
 
-public class CreateAssignmentDto
+public class CreateAssignmentDTO
 {
     public string Education { get; set; } = "";
 

@@ -25,7 +25,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<StudentResponseDto>> CreateStudent ([FromBody] CreateStudentDTO dto)
+    public async Task<ActionResult<StudentResponseDTO>> CreateStudent ([FromBody] CreateStudentDTO dto)
     {
         var validation = await validator.ValidateAsync(dto);
         if (!validation.IsValid)
@@ -67,7 +67,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<StudentResponseDto>>> GetStudents ([FromQuery(Name = "class")] string? className)
+    public async Task<ActionResult<IEnumerable<StudentResponseDTO>>> GetStudents ([FromQuery(Name = "class")] string? className)
     {
         if (string.IsNullOrWhiteSpace(className))
         {
@@ -79,7 +79,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet ("{id}")]
-    public async Task<ActionResult<StudentResponseDto>> GetStudent (Guid id)
+    public async Task<ActionResult<StudentResponseDTO>> GetStudent (Guid id)
     {
         var student = await studentService.GetStudent (id);
 

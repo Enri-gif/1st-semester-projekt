@@ -3,15 +3,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.Data;
 
-public interface IStudentRepository
-{
-    Task<Student?> GetByIdAsync(Guid id);
-    Task<IEnumerable<Student>> GetByClassAsync(string className);
-    Task AddAsync(Student student);
-    Task<bool> RemoveAsync(Student student);
-    Task<int> SaveChangesAsync();
-}
-
 public class StudentRepository : IStudentRepository
 {
     private readonly ApplicationDbContext _db;

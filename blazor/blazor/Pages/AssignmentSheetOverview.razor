@@ -29,7 +29,7 @@ else
         <thead>
             <tr>
                 <th>Titel</th><th>Fag</th><th>Niveau</th><th>År</th><th>Ejer</th>
-                <th>Regneark</th><th>Retteark</th><th>Hold-zip</th><th>Point</th><th>Slet</th>
+                <th>PDF</th><th>Regneark</th><th>Retteark</th><th>Hold-zip</th><th>Point</th><th>Slet</th>
             </tr>
         </thead>
         <tbody>
@@ -41,6 +41,7 @@ else
                 <td>@s.Level</td>
                 <td>@s.Year</td>
                 <td>@s.Owner</td>
+                <td><button @onclick="() => DownloadPdf(s)">Hent</button></td>
                 <td><button @onclick="() => DownloadSpreadsheet(s, marking: false)">Hent</button></td>
                 <td><button @onclick="() => DownloadSpreadsheet(s, marking: true)">Hent</button></td>
                 <td>
@@ -53,7 +54,7 @@ else
             @if (pointsBreakdowns.TryGetValue(s.Id, out var points))
             {
                 <tr>
-                    <td colspan="10">
+                    <td colspan="11">
                         <strong>Total: @points.TotalPoints</strong> —
                         @string.Join(", ", points.PerAssignment.Select(p => $"#{p.Number}: {p.Points}p"))
                     </td>
@@ -67,7 +68,7 @@ else
 @code {
     private List<AssignmentSheetSummary> sheets = new();
     private readonly Dictionary<Guid, string> classInput = new();
-    private readonly Dictionary<Guid, AssignmentSheetPointsDto> pointsBreakdowns = new();
+    private readonly Dictionary<Guid, AssignmentSheetPointsDTO> pointsBreakdowns = new();
     private bool loading = true;
     private string status = "";
 
@@ -93,6 +94,9 @@ else
             loading = false;
         }
     }
+
+    private Task DownloadPdf(AssignmentSheetSummary s)
+        => DownloadBinary($"api/assignmentsheet/{s.Id}/pdf", $"{s.Title}.pdf");
 
     private async Task DownloadSpreadsheet(AssignmentSheetSummary s, bool marking)
     {
@@ -141,7 +145,7 @@ else
         if (pointsBreakdowns.Remove(s.Id)) return;
         try
         {
-            var dto = await Http.GetFromJsonAsync<AssignmentSheetPointsDto>($"api/assignmentsheet/{s.Id}/points");
+            var dto = await Http.GetFromJsonAsync<AssignmentSheetPointsDTO>($"api/assignmentsheet/{s.Id}/points");
             if (dto is not null)
             {
                 pointsBreakdowns[s.Id] = dto;
@@ -170,9 +174,10 @@ else
         public string Level { get; set; } = "";
         public int Year { get; set; }
         public string Owner { get; set; } = "";
+        public AssignmentSheetType Type { get; set; }
     }
 
-    public class AssignmentSheetPointsDto
+    public class AssignmentSheetPointsDTO
     {
         public Guid AssignmentSheetId { get; set; }
         public int TotalPoints { get; set; }

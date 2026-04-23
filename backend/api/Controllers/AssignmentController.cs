@@ -13,19 +13,19 @@ namespace api.Controllers;
 [Authorize(Roles = Roles.Teacher)]
 public class AssignmentController : ControllerBase
 {
-    private readonly IAssignmentService _service;
+    private readonly IAssignmentService _assignmentService;
     private readonly MongoImageService _mongoImageService;
-    private readonly IValidator<CreateAssignmentDto> _validator;
+    private readonly IValidator<CreateAssignmentDTO> _validator;
 
-    public AssignmentController(IAssignmentService service, MongoImageService mongoImageService, IValidator<CreateAssignmentDto> validator)
+    public AssignmentController(IAssignmentService assignmentService, MongoImageService mongoImageService, IValidator<CreateAssignmentDTO> validator)
     {
         _mongoImageService = mongoImageService;
-        _service = service;
+        _assignmentService = assignmentService;
         _validator = validator;
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResult<AssignmentResponseDto>>> GetAssignments(
+    public async Task<ActionResult<PagedResult<AssignmentResponseDTO>>> GetAssignments(
         [FromQuery] string? subject,
         [FromQuery] string? level,
         [FromQuery] int? year,
@@ -38,11 +38,11 @@ public class AssignmentController : ControllerBase
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortDir = null)
     {
-        var result = await _service.GetFiltered(
+        var result = await _assignmentService.GetFiltered(
             subject, level, year, topic, owner, tag, assignmentSheetId,
             page, pageSize, sortBy, sortDir);
 
-        return Ok(new PagedResult<AssignmentResponseDto>
+        return Ok(new PagedResult<AssignmentResponseDTO>
         {
             Items = result.Items.Select(a => a.ToResponse()).ToList(),
             Page = result.Page,
@@ -54,7 +54,7 @@ public class AssignmentController : ControllerBase
     [HttpGet("with-images")]
     public async Task<ActionResult<List<AssignmentImagesDTO>>> GetAssignmentsWithImages()
     {
-        var assignments = await _service.GetAll();
+        var assignments = await _assignmentService.GetAll();
         var result = new List<AssignmentImagesDTO>();
 
         foreach (var assignment in assignments)
@@ -71,9 +71,9 @@ public class AssignmentController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<AssignmentResponseDto>> GetAssignmentById(Guid id)
+    public async Task<ActionResult<AssignmentResponseDTO>> GetAssignmentById(Guid id)
     {
-        var assignment = await _service.GetById(id);
+        var assignment = await _assignmentService.GetById(id);
         if (assignment == null)
             return NotFound();
 
@@ -83,7 +83,7 @@ public class AssignmentController : ControllerBase
     [HttpGet("{id}/with-images")]
     public async Task<ActionResult<AssignmentImagesDTO>> GetAssignmentByIdWithImages(Guid id)
     {
-        var assignment = await _service.GetById(id);
+        var assignment = await _assignmentService.GetById(id);
         if (assignment == null)
             return NotFound();
 
@@ -98,7 +98,7 @@ public class AssignmentController : ControllerBase
     [HttpGet("with-id")]
     public async Task<ActionResult<List<AssignmentWithIdDTO>>> GetAssignmentsWithId()
     {
-        var assignments = await _service.GetAll();
+        var assignments = await _assignmentService.GetAll();
         return Ok(assignments.Select(a => new AssignmentWithIdDTO
         {
             Id = a.Id,
@@ -109,8 +109,8 @@ public class AssignmentController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<AssignmentResponseDto>> CreateAssignment(
-        [FromForm] CreateAssignmentDto dto,
+    public async Task<ActionResult<AssignmentResponseDTO>> CreateAssignment(
+        [FromForm] CreateAssignmentDTO dto,
         [FromForm] IFormFileCollection? images)
     {
         var validation = await _validator.ValidateAsync(dto);
@@ -141,7 +141,7 @@ public class AssignmentController : ControllerBase
                 : dto.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()
         };
 
-        var created = await _service.Create(newAssignment);
+        var created = await _assignmentService.Create(newAssignment);
 
         if (images != null && images.Count > 0)
         {
@@ -169,7 +169,7 @@ public class AssignmentController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAssignment(Guid id)
     {
-        bool deleted = await _service.DeleteAssignment(id);
+        bool deleted = await _assignmentService.DeleteAssignment(id);
         if (!deleted)
             return NotFound();
 

@@ -20,7 +20,7 @@ public class StatisticsController : ControllerBase
     }
 
     [HttpGet("summary")]
-    public async Task<ActionResult<StatisticsDto>> GetSummary()
+    public async Task<ActionResult<StatisticsDTO>> GetSummary()
     {
         var assignments = await _dbContext.Assignments.AsNoTracking().ToListAsync();
 
@@ -48,6 +48,6 @@ public class StatisticsController : ControllerBase
             .OrderByDescending(s => s.TotalPoints)
             .ToList();
 
-        return Ok(new StatisticsDto { BySubject = bySubject, ByTopic = byTopic });
+        return Ok(new StatisticsDTO { BySubject = bySubject, ByTopic = byTopic });
     }
 }

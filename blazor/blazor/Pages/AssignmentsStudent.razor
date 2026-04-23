@@ -4,6 +4,7 @@
 @using System.Net.Http.Json
 @attribute [Authorize(Roles = Roles.Student)]
 @inject HttpClient Http
+@inject IJSRuntime JS
 
 <h1 class="title">Besvarelse</h1>
 
@@ -35,6 +36,10 @@
                         disabled="@(state.StudentPoints == null || state.Revealed)">
                     @(state.Revealed ? "Vurdering vist" : "Se vurdering")
                 </button>
+
+                <button @onclick="() => ShowVideos(a)">
+                    Se video
+                </button>
             </div>
 
             @if (state.Revealed)
@@ -47,6 +52,23 @@
             else if (!string.IsNullOrEmpty(state.Message))
             {
                 <div class="laerer-box"><em>@state.Message</em></div>
+            }
+
+            @if (state.VideoUrls?.Count > 0)
+            {
+                <div class="video-list">
+                    <strong>Videoer:</strong>
+                    @foreach (var url in state.VideoUrls)
+                    {
+                        <div>
+                            <a href="@url" target="_blank" rel="noopener">@url</a>
+                        </div>
+                    }
+                </div>
+            }
+            else if (state.VideoUrls != null && state.VideoUrls.Count == 0)
+            {
+                <div class="video-list"><em>Ingen videoer tilknyttet denne opgave.</em></div>
             }
         </div>
     }
@@ -104,12 +126,28 @@
         }
     }
 
+    private async Task ShowVideos(Assignment a)
+    {
+        var state = GetState(a.Id);
+        try
+        {
+            var urls = await Http.GetFromJsonAsync<List<string>>($"api/video/assignment/{a.Id}");
+            state.VideoUrls = urls ?? new List<string>();
+        }
+        catch (Exception ex)
+        {
+            state.VideoUrls = new List<string>();
+            Console.WriteLine($"Failed to load videos for assignment {a.Id}: {ex.Message}");
+        }
+    }
+
     private class EvaluationState
     {
         public int? StudentPoints { get; set; }
         public bool Revealed { get; set; }
         public string TeacherEvaluation { get; set; } = "";
         public string Message { get; set; } = "";
+        public List<string>? VideoUrls { get; set; }
     }
 
     private class TeacherEvaluationResponse
