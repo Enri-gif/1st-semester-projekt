@@ -1,21 +1,41 @@
-﻿namespace blazor.Services;
+using Microsoft.AspNetCore.Components.Authorization;
+
+namespace blazor.Services;
 
 public interface IAuthService
 {
-    void SetToken (string token);
+    void SetToken(string token);
+    void SignOut();
 }
 
 public class AuthService : IAuthService
 {
     private readonly HttpClient http;
+    private readonly AuthenticationStateProvider authStateProvider;
 
-    public AuthService (HttpClient http)
+    public AuthService(HttpClient http, AuthenticationStateProvider authStateProvider)
     {
         this.http = http;
+        this.authStateProvider = authStateProvider;
     }
 
-    public void SetToken (string token)
+    public void SetToken(string token)
     {
-        http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue ("Bearer", token);
+        http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        if (authStateProvider is ApiAuthStateProvider api)
+        {
+            api.NotifyUserAuthenticated();
+        }
+    }
+
+    public void SignOut()
+    {
+        http.DefaultRequestHeaders.Authorization = null;
+
+        if (authStateProvider is ApiAuthStateProvider api)
+        {
+            api.NotifyUserSignedOut();
+        }
     }
 }

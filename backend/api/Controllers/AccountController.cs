@@ -1,21 +1,27 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Identity;
-using api.Data;
-using Microsoft.AspNetCore.Cors;
+
+namespace api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 [EnableCors("DevCors")]
 public class AccountController : ControllerBase
 {
+    private readonly ILogger<AccountController> logger;
+
+    public AccountController(ILogger<AccountController> logger)
+    {
+        this.logger = logger;
+    }
+
     [Authorize]
     [HttpGet("me")]
     public IActionResult Me()
     {
         var user = HttpContext.User;
-
         var name = user.Identity?.Name;
 
         var roles = user.Claims
@@ -23,9 +29,12 @@ public class AccountController : ControllerBase
             .Select(c => c.Value)
             .ToList();
 
-        foreach (var claim in user.Claims)
+        if (logger.IsEnabled(LogLevel.Debug))
         {
-            Console.WriteLine($"{user.Identity?.Name} ||||||| {claim}");
+            foreach (var claim in user.Claims)
+            {
+                logger.LogDebug("{UserName} claim: {ClaimType}={ClaimValue}", name, claim.Type, claim.Value);
+            }
         }
 
         return Ok(new
@@ -33,20 +42,5 @@ public class AccountController : ControllerBase
             Name = name,
             Roles = roles
         });
-    }
-
-    [HttpPost("login-test")]
-    public async Task<IActionResult> LoginTest([FromServices] SignInManager<ApplicationUser> signInManager)
-    {
-        var user = await signInManager.UserManager.FindByNameAsync("teacher");
-
-        if (user == null)
-        {
-            return NotFound("User not found");
-        }
-
-        await signInManager.SignInAsync(user, isPersistent: true);
-
-            return Ok();
     }
 }

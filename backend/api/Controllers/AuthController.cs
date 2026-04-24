@@ -1,12 +1,11 @@
-﻿using api.Data;
-using Api.DTOs;
-using Api.Services;
+using api.Data;
+using api.Services;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Authorization;
 
-namespace Api.Controllers;
+namespace api.Controllers;
 
 [ApiController]
 [Route ("api/auth")]
@@ -15,11 +14,13 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> userManager;
     private readonly ITokenService tokenService;
+    private readonly ILogger<AuthController> logger;
 
-    public AuthController (UserManager<ApplicationUser> userManager, ITokenService tokenService)
+    public AuthController (UserManager<ApplicationUser> userManager, ITokenService tokenService, ILogger<AuthController> logger)
     {
         this.userManager = userManager;
         this.tokenService = tokenService;
+        this.logger = logger;
     }
 
     [HttpPost ("login")]
@@ -27,32 +28,24 @@ public class AuthController : ControllerBase
     {
         if (model == null)
         {
-            Console.WriteLine ($"{0} - Bad Request: Login model is null.", "AuthController");
+            logger.LogWarning("Login failed: body was null");
             return BadRequest ("Login model is null");
         }
 
-        try
-        {
-            var user = await userManager.FindByNameAsync (model.UserName);
+        var user = await userManager.FindByNameAsync (model.UserName);
 
-            if (user == null || !await userManager.CheckPasswordAsync (user, model.Password))
-            {
-                Console.WriteLine ($"{0} - Unauthorized: User null or password match failed for user.", "AuthController");
-                return Unauthorized ("This is a restricted area.");
-            }
-
-            var token = await tokenService.CreateToken (user);
-            var roles = await userManager.GetRolesAsync (user);
-            var firstRole = roles.FirstOrDefault();
-            
-            Console.WriteLine ($"{0} - Succesful Login for {user}, {firstRole}", "AuthController");
-            return Ok (new LoginResult { Token = token, Role = firstRole ?? "" });
-        }
-        catch (Exception ex)
+        if (user == null || !await userManager.CheckPasswordAsync (user, model.Password))
         {
-            Console.WriteLine ($"{0} - Exception thrown: {ex}.", "AuthController");
-            return StatusCode (500, ex.Message);
+            logger.LogInformation("Login failed for {UserName}", model.UserName);
+            return Unauthorized ("This is a restricted area.");
         }
+
+        var token = await tokenService.CreateToken (user);
+        var roles = await userManager.GetRolesAsync (user);
+        var firstRole = roles.FirstOrDefault() ?? "";
+
+        logger.LogInformation("Login succeeded for {UserName} with role {Role}", user.UserName, firstRole);
+        return Ok (new LoginResult { Token = token, Role = firstRole });
     }
 }
 

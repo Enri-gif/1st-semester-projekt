@@ -1,0 +1,174 @@
+@page "/statistik-elev"
+@using Shared
+@using blazor.models
+@using System.Globalization
+@using System.Net.Http.Json
+@attribute [Authorize(Roles = Roles.StudentOrTeacher)]
+@inject HttpClient Http
+
+<PageTitle>Statistik</PageTitle>
+
+<h1>Statistik</h1>
+
+@if (loading)
+{
+    <p>Indlæser...</p>
+}
+else if (stats == null)
+{
+    <p>Kunne ikke hente statistik.</p>
+}
+else
+{
+    <section class="chart-section">
+        <h2>Point pr. fag (Pie)</h2>
+        @if (stats.BySubject.Count == 0)
+        {
+            <p>Ingen data.</p>
+        }
+        else
+        {
+            @RenderPie(stats.BySubject.Select(s => (s.Subject, (double)s.TotalPoints)).ToList())
+        }
+    </section>
+
+    <section class="chart-section">
+        <h2>Gennemsnitlige point pr. emne (Radar)</h2>
+        @if (stats.ByTopic.Count < 3)
+        {
+            <p>Mindst 3 emner kræves for at tegne radar.</p>
+        }
+        else
+        {
+            @RenderRadar(stats.ByTopic.Select(t => (t.Topic, t.AveragePoints)).ToList())
+        }
+    </section>
+}
+
+@code {
+    private StatisticsDTO? stats;
+    private bool loading = true;
+
+    private static readonly string[] Palette =
+    {
+        "#4e79a7", "#f28e2b", "#e15759", "#76b7b2", "#59a14f",
+        "#edc948", "#b07aa1", "#ff9da7", "#9c755f", "#bab0ac"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            stats = await Http.GetFromJsonAsync<StatisticsDTO>("api/statistics/summary");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Stats fetch failed: {ex.Message}");
+            stats = null;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private RenderFragment RenderPie(List<(string label, double value)> data) => builder =>
+    {
+        double total = data.Sum(d => d.value);
+        if (total <= 0)
+        {
+            builder.AddMarkupContent(0, "<p>Ingen point registreret.</p>");
+            return;
+        }
+
+        const int size = 320;
+        const int cx = 160, cy = 160, r = 140;
+        double startAngle = -Math.PI / 2;
+
+        var svg = new System.Text.StringBuilder();
+        svg.Append($"<svg viewBox=\"0 0 {size} {size + 20}\" width=\"{size}\" height=\"{size + 20}\" xmlns=\"http://www.w3.org/2000/svg\">");
+
+        for (int i = 0; i < data.Count; i++)
+        {
+            double fraction = data[i].value / total;
+            double endAngle = startAngle + fraction * Math.PI * 2;
+            double x1 = cx + r * Math.Cos(startAngle);
+            double y1 = cy + r * Math.Sin(startAngle);
+            double x2 = cx + r * Math.Cos(endAngle);
+            double y2 = cy + r * Math.Sin(endAngle);
+            int largeArc = fraction > 0.5 ? 1 : 0;
+
+            string color = Palette[i % Palette.Length];
+            svg.Append($"<path d=\"M {cx} {cy} L {F(x1)} {F(y1)} A {r} {r} 0 {largeArc} 1 {F(x2)} {F(y2)} Z\" fill=\"{color}\" stroke=\"white\" stroke-width=\"2\"/>");
+
+            double midAngle = (startAngle + endAngle) / 2;
+            double lx = cx + r * 0.6 * Math.Cos(midAngle);
+            double ly = cy + r * 0.6 * Math.Sin(midAngle);
+            if (fraction > 0.05)
+            {
+                svg.Append($"<text x=\"{F(lx)}\" y=\"{F(ly)}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"white\">{(fraction * 100):F0}%</text>");
+            }
+
+            startAngle = endAngle;
+        }
+        svg.Append("</svg>");
+
+        svg.Append("<ul class=\"legend\">");
+        for (int i = 0; i < data.Count; i++)
+        {
+            svg.Append($"<li><span class=\"swatch\" style=\"background:{Palette[i % Palette.Length]}\"></span>{System.Net.WebUtility.HtmlEncode(data[i].label)} ({data[i].value:F0})</li>");
+        }
+        svg.Append("</ul>");
+
+        builder.AddMarkupContent(0, svg.ToString());
+    };
+
+    private RenderFragment RenderRadar(List<(string label, double value)> data) => builder =>
+    {
+        const int size = 360;
+        const int cx = 180, cy = 180, r = 140;
+        double max = data.Max(d => d.value);
+        if (max <= 0) max = 1;
+
+        var svg = new System.Text.StringBuilder();
+        svg.Append($"<svg viewBox=\"0 0 {size} {size}\" width=\"{size}\" height=\"{size}\" xmlns=\"http://www.w3.org/2000/svg\">");
+
+        for (int ring = 1; ring <= 4; ring++)
+        {
+            double rr = r * ring / 4.0;
+            svg.Append($"<circle cx=\"{cx}\" cy=\"{cy}\" r=\"{F(rr)}\" fill=\"none\" stroke=\"#ddd\" stroke-width=\"1\"/>");
+        }
+
+        int n = data.Count;
+        var points = new List<(double x, double y)>();
+        for (int i = 0; i < n; i++)
+        {
+            double angle = -Math.PI / 2 + 2 * Math.PI * i / n;
+            double ax = cx + r * Math.Cos(angle);
+            double ay = cy + r * Math.Sin(angle);
+            svg.Append($"<line x1=\"{cx}\" y1=\"{cy}\" x2=\"{F(ax)}\" y2=\"{F(ay)}\" stroke=\"#ddd\"/>");
+
+            double rad = r * (data[i].value / max);
+            double px = cx + rad * Math.Cos(angle);
+            double py = cy + rad * Math.Sin(angle);
+            points.Add((px, py));
+
+            double tx = cx + (r + 14) * Math.Cos(angle);
+            double ty = cy + (r + 14) * Math.Sin(angle);
+            svg.Append($"<text x=\"{F(tx)}\" y=\"{F(ty)}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"11\" fill=\"#333\">{System.Net.WebUtility.HtmlEncode(data[i].label)}</text>");
+        }
+
+        var poly = string.Join(" ", points.Select(p => $"{F(p.x)},{F(p.y)}"));
+        svg.Append($"<polygon points=\"{poly}\" fill=\"rgba(78,121,167,0.4)\" stroke=\"#4e79a7\" stroke-width=\"2\"/>");
+
+        foreach (var p in points)
+        {
+            svg.Append($"<circle cx=\"{F(p.x)}\" cy=\"{F(p.y)}\" r=\"3\" fill=\"#4e79a7\"/>");
+        }
+
+        svg.Append("</svg>");
+        builder.AddMarkupContent(0, svg.ToString());
+    };
+
+    private static string F(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
+}

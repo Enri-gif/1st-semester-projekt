@@ -1,0 +1,201 @@
+@page "/filter-assignments"
+@using Shared
+@using blazor.models
+@using System.Net.Http.Json
+@using System.Text
+@attribute [Authorize(Roles = Roles.Teacher)]
+@inject HttpClient Http
+
+<PageTitle>Filtrér opgaver</PageTitle>
+
+<h1>Filtrér opgaver</h1>
+
+<div class="filter-grid">
+    <div class="filter-field">
+        <label>Fag</label>
+        <input @bind="subject" />
+    </div>
+    <div class="filter-field">
+        <label>Niveau</label>
+        <input @bind="level" />
+    </div>
+    <div class="filter-field">
+        <label>Årstal</label>
+        <input type="number" @bind="year" />
+    </div>
+    <div class="filter-field">
+        <label>Emne</label>
+        <input @bind="topic" />
+    </div>
+    <div class="filter-field">
+        <label>Ejer</label>
+        <input @bind="owner" />
+    </div>
+    <div class="filter-field">
+        <label>Tag</label>
+        <input @bind="tag" />
+    </div>
+    <div class="filter-field">
+        <label>Sortér efter</label>
+        <select @bind="sortBy">
+            <option value="date">Dato</option>
+            <option value="year">Årstal</option>
+            <option value="points">Point</option>
+            <option value="number">Nr</option>
+            <option value="subject">Fag</option>
+            <option value="level">Niveau</option>
+            <option value="topic">Emne</option>
+            <option value="owner">Ejer</option>
+        </select>
+    </div>
+    <div class="filter-field">
+        <label>Retning</label>
+        <select @bind="sortDir">
+            <option value="desc">Faldende</option>
+            <option value="asc">Stigende</option>
+        </select>
+    </div>
+    <div class="filter-field">
+        <label>Pr. side</label>
+        <select @bind="pageSize">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
+    </div>
+    <div class="filter-field search-field">
+        <button class="btn btn-primary" @onclick="Search">Søg</button>
+        <button class="btn btn-secondary" @onclick="Reset">Nulstil</button>
+    </div>
+</div>
+
+@if (loading)
+{
+    <p>Indlæser...</p>
+}
+else if (result != null)
+{
+    <p class="result-count">@result.Total resultat(er) — side @result.Page af @result.TotalPages</p>
+
+    <table class="result-table">
+        <thead>
+            <tr>
+                <th>Nr</th>
+                <th>Fag</th>
+                <th>Niveau</th>
+                <th>År</th>
+                <th>Emne</th>
+                <th>Point</th>
+                <th>Tags</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in result.Items)
+            {
+                <tr @key="a.Id">
+                    <td>@a.Number</td>
+                    <td>@a.Subject</td>
+                    <td>@a.Level</td>
+                    <td>@a.Year</td>
+                    <td>@a.Topic</td>
+                    <td>@a.Points</td>
+                    <td>@string.Join(", ", a.Tags)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <button class="btn" disabled="@(page <= 1)" @onclick="PrevPage">← Forrige</button>
+        <span>Side @result.Page / @result.TotalPages</span>
+        <button class="btn" disabled="@(page >= result.TotalPages)" @onclick="NextPage">Næste →</button>
+    </div>
+}
+
+@code {
+    private string subject = "";
+    private string level = "";
+    private int? year;
+    private string topic = "";
+    private string owner = "";
+    private string tag = "";
+    private string sortBy = "date";
+    private string sortDir = "desc";
+    private int page = 1;
+    private int pageSize = 20;
+
+    private PagedResult<Assignment>? result;
+    private bool loading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Search();
+    }
+
+    private async Task Search()
+    {
+        loading = true;
+        try
+        {
+            var url = BuildUrl();
+            result = await Http.GetFromJsonAsync<PagedResult<Assignment>>(url);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Filter fetch failed: {ex.Message}");
+            result = null;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void Reset()
+    {
+        subject = level = topic = owner = tag = "";
+        year = null;
+        sortBy = "date";
+        sortDir = "desc";
+        page = 1;
+        pageSize = 20;
+        _ = Search();
+    }
+
+    private async Task PrevPage()
+    {
+        if (page > 1)
+        {
+            page--;
+            await Search();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (result != null && page < result.TotalPages)
+        {
+            page++;
+            await Search();
+        }
+    }
+
+    private string BuildUrl()
+    {
+        var sb = new StringBuilder("api/assignment?");
+        void Add(string key, string? value)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                sb.Append($"{key}={Uri.EscapeDataString(value)}&");
+        }
+        Add("subject", subject);
+        Add("level", level);
+        if (year.HasValue) sb.Append($"year={year.Value}&");
+        Add("topic", topic);
+        Add("owner", owner);
+        Add("tag", tag);
+        sb.Append($"sortBy={sortBy}&sortDir={sortDir}&page={page}&pageSize={pageSize}");
+        return sb.ToString();
+    }
+}

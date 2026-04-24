@@ -1,62 +1,190 @@
 @page "/edit-assignment-sheet"
+@using Shared
+@using blazor.models
+@using System.Net.Http.Json
+@attribute [Authorize(Roles = Roles.Teacher)]
+@inject HttpClient Http
+@inject NavigationManager Navigation
 
 <h1 class="title">Ret opgavesæt</h1>
 
 <div class="page-container">
 
-    <!-- Top dropdowns -->
     <div class="top-controls">
-        <select>
-            <option>Vælg Hold</option>
+        <select @bind="selectedId">
+            <option value="">Vælg opgavesæt</option>
+            @foreach (var s in sheets)
+            {
+                <option value="@s.Id">@s.Title (@s.Subject, @s.Year)</option>
+            }
         </select>
 
-        <select>
-            <option>Vælg Elev</option>
-        </select>
-
-        <select>
-            <option>Vælg Opgavesæt</option>
-        </select>
+        <button @onclick="Load" disabled="@(string.IsNullOrEmpty(selectedId))">Hent</button>
     </div>
 
-    <!-- Opgaver -->
-    <div class="opgaver-container">
+    @if (form is not null)
+    {
+        <div class="opgaver-container">
+            <div class="opgave-block">
+                <div class="opgave-inputs">
+                    <label>Titel</label>
+                    <input type="text" @bind="form.Title" />
 
-        <!-- Opgave 1 -->
-        <div class="opgave-block">
-            <div class="opgave-header">
-                <span>Opgave 1a</span>
-            </div>
+                    <label>Fag</label>
+                    <input type="text" @bind="form.Subject" />
 
-            <div class="opgave-box">Opgave</div>
+                    <label>Niveau</label>
+                    <input type="text" @bind="form.Level" />
 
-            <div class="opgave-inputs">
-                <input type="text" placeholder="Vurdering" />
-                <input type="text" placeholder="Fejlkoder" />
-                <textarea placeholder="Kommentar"></textarea>
+                    <label>År</label>
+                    <input type="number" @bind="form.Year" />
+
+                    <label>Ejer</label>
+                    <input type="text" @bind="form.Owner" />
+
+                    <label>Type</label>
+                    <select @bind="form.Type">
+                        <option value="Hjemmeopgave">Hjemmeopgave</option>
+                        <option value="Proeve">Prøve</option>
+                    </select>
+
+                    <label>Opgaver (vælg de opgaver der skal indgå)</label>
+                    <input placeholder="Filter…" @bind="filter" @bind:event="oninput" />
+                    <div style="max-height:260px;overflow:auto;border:1px solid #ccc;padding:6px;">
+                        @foreach (var a in FilteredAssignments)
+                        {
+                            <label style="display:block;">
+                                <input type="checkbox"
+                                       checked="@form.AssignmentIds!.Contains(a.Id)"
+                                       @onchange="e => ToggleAssignment(a.Id, (bool)e.Value!)" />
+                                @a.Subject — @a.Topic (Opg. @a.Number, @a.Points p.)
+                            </label>
+                        }
+                    </div>
+                    <small>@form.AssignmentIds!.Count valgt</small>
+
+                    <button @onclick="Save" disabled="@string.IsNullOrWhiteSpace(form.Title)">
+                        Gem ændringer
+                    </button>
+                </div>
             </div>
         </div>
+    }
 
-        <!-- Opgave 2 -->
-        <div class="opgave-block">
-            <div class="opgave-header">
-                <span>Opgave 2a</span>
-            </div>
-
-            <div class="opgave-box">Opgave</div>
-
-            <div class="opgave-inputs">
-                <input type="text" placeholder="Vurdering" />
-                <input type="text" placeholder="Fejlkoder" />
-                <textarea placeholder="Kommentar"></textarea>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Afslut -->
-    <div class="footer">
-        <button class="afslut-btn">Afslut</button>
-    </div>
-
+    @if (!string.IsNullOrEmpty(status))
+    {
+        <p>@status</p>
+    }
 </div>
+
+@code {
+    private List<AssignmentSheetSummary> sheets = new();
+    private List<Assignment> allAssignments = new();
+    private string selectedId = "";
+    private string filter = "";
+    private UpdateAssignmentSheetDTO? form;
+    private string status = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            sheets = await Http.GetFromJsonAsync<List<AssignmentSheetSummary>>("api/assignmentsheet") ?? new();
+            var paged = await Http.GetFromJsonAsync<PagedResult<Assignment>>("api/assignment?pageSize=200");
+            allAssignments = paged?.Items ?? new();
+        }
+        catch (Exception ex)
+        {
+            status = $"Kunne ikke hente data: {ex.Message}";
+        }
+    }
+
+    private IEnumerable<Assignment> FilteredAssignments =>
+        string.IsNullOrWhiteSpace(filter)
+            ? allAssignments
+            : allAssignments.Where(a =>
+                (a.Subject?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (a.Topic?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    private void ToggleAssignment(Guid id, bool isChecked)
+    {
+        if (form?.AssignmentIds is null) return;
+        if (isChecked)
+        {
+            if (!form.AssignmentIds.Contains(id)) form.AssignmentIds.Add(id);
+        }
+        else
+        {
+            form.AssignmentIds.Remove(id);
+        }
+    }
+
+    private async Task Load()
+    {
+        if (string.IsNullOrEmpty(selectedId)) return;
+        try
+        {
+            var sheet = await Http.GetFromJsonAsync<AssignmentSheetSummary>($"api/assignmentsheet/{selectedId}");
+            if (sheet is null) { status = "Opgavesæt ikke fundet."; return; }
+
+            var currentAssignmentIds = allAssignments
+                .Where(a => a.AssignmentSheetId == sheet.Id)
+                .Select(a => a.Id)
+                .ToList();
+
+            form = new UpdateAssignmentSheetDTO
+            {
+                Title = sheet.Title,
+                Subject = sheet.Subject,
+                Level = sheet.Level,
+                Year = sheet.Year,
+                Owner = sheet.Owner,
+                Type = sheet.Type,
+                AssignmentIds = currentAssignmentIds
+            };
+            status = "";
+        }
+        catch (Exception ex)
+        {
+            status = $"Fejl: {ex.Message}";
+        }
+    }
+
+    private async Task Save()
+    {
+        if (form is null || string.IsNullOrEmpty(selectedId)) return;
+        var response = await Http.PutAsJsonAsync($"api/assignmentsheet/{selectedId}", form);
+        if (response.IsSuccessStatusCode)
+        {
+            status = $"Opgavesæt '{form.Title}' opdateret.";
+            await Task.Delay(1200);
+            Navigation.NavigateTo("/assignment-sheet-overview");
+        }
+        else
+        {
+            status = $"Opdatering fejlede: {(int)response.StatusCode}";
+        }
+    }
+
+    public class AssignmentSheetSummary
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = "";
+        public string Subject { get; set; } = "";
+        public string Level { get; set; } = "";
+        public int Year { get; set; }
+        public string Owner { get; set; } = "";
+        public AssignmentSheetType Type { get; set; }
+    }
+
+    public class UpdateAssignmentSheetDTO
+    {
+        public string Title { get; set; } = "";
+        public string Subject { get; set; } = "";
+        public string Level { get; set; } = "";
+        public int Year { get; set; } = DateTime.Today.Year;
+        public string Owner { get; set; } = "Prøvebank";
+        public AssignmentSheetType Type { get; set; } = AssignmentSheetType.Hjemmeopgave;
+        public List<Guid>? AssignmentIds { get; set; } = new();
+    }
+}
