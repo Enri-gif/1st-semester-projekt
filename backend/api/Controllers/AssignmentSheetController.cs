@@ -100,7 +100,10 @@ public class AssignmentSheetController : ControllerBase
             Level = dto.Level,
             Year = dto.Year,
             Owner = string.IsNullOrWhiteSpace(dto.Owner) ? "Prøvebank" : dto.Owner,
-            Type = dto.Type
+            Type = dto.Type,
+            Grade = dto.Grade ?? "",
+            Feedback = dto.Feedback ?? "",
+            CorrectionNotes = dto.CorrectionNotes ?? ""
         };
 
         var updated = await _assignmentSheetService.UpdateAssignmentSheet(sheet, dto.AssignmentIds);

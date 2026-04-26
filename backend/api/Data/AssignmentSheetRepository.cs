@@ -48,6 +48,9 @@ public class AssignmentSheetRepository : IAssignmentSheetRepository
         existing.Year = sheet.Year;
         existing.Owner = sheet.Owner;
         existing.Type = sheet.Type;
+        existing.Grade = sheet.Grade;
+        existing.Feedback = sheet.Feedback;
+        existing.CorrectionNotes = sheet.CorrectionNotes;
 
         await _dbContext.SaveChangesAsync();
         return true;

@@ -12,6 +12,12 @@ public class AssignmentSheet
     public int Year { get; set; } = DateTime.Today.Year;
     public string Owner { get; set; } = "Prøvebank";
     public AssignmentSheetType Type { get; set; } = AssignmentSheetType.Hjemmeopgave;
+
+    // Teacher correction context — populated when a sheet has been graded.
+    public string Grade { get; set; } = "";
+    public string Feedback { get; set; } = "";
+    public string CorrectionNotes { get; set; } = "";
+
     public List<Assignment> Assignments { get; set; } = new List<Assignment>();
 
     [Timestamp]
