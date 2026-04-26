@@ -65,4 +65,4 @@ nunit-*.xml
 
 # These are user-specific project settings and session-specific IDE stuff from VS
 *.user
-*.suo
+*.suo.nuget-build.config
