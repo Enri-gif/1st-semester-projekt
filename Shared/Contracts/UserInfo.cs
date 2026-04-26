@@ -1,3 +1,5 @@
+namespace Shared.Contracts;
+
 public class UserInfo
 {
     public string Name { get; set; } = string.Empty;
