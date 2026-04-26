@@ -40,8 +40,8 @@ Blazor WebAssembly frontend + ASP.NET Core Web API backend, with SQL Server (EF 
    ./run.sh     # macOS / Linux
    ./run.ps1    # Windows PowerShell
    ```
-   - API: <http://localhost:5000> (OpenAPI: <http://localhost:5000/openapi/v1.json>)
-   - Blazor: <http://localhost:5001>
+   - API: <http://localhost:5000> / <https://localhost:5001> (OpenAPI: <http://localhost:5000/openapi/v1.json>)
+   - Blazor: <http://localhost:5050> / <https://localhost:5051>
 
 ## Seeded accounts
 
