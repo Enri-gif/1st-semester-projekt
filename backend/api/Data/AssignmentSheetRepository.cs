@@ -48,6 +48,9 @@ public class AssignmentSheetRepository : IAssignmentSheetRepository
         existing.Year = sheet.Year;
         existing.Owner = sheet.Owner;
         existing.Type = sheet.Type;
+        existing.Topic = sheet.Topic;
+        existing.Education = sheet.Education;
+        existing.Tags = sheet.Tags ?? new List<string>();
 
         await _dbContext.SaveChangesAsync();
         return true;
