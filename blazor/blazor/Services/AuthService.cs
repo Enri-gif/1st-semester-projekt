@@ -1,12 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
+using blazor.Interfaces;
 
 namespace blazor.Services;
-
-public interface IAuthService
-{
-    void SetToken(string token);
-    void SignOut();
-}
 
 public class AuthService : IAuthService
 {

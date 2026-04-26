@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using api.Interfaces;
 
 namespace api.Services;
 

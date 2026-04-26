@@ -2,6 +2,7 @@ using api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared;
+using api.Interfaces;
 
 namespace api.Controllers;
 

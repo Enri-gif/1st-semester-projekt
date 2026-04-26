@@ -1,6 +1,6 @@
 using api.Models;
 
-namespace api.Data;
+namespace api.Interfaces;
 
 public interface IAssignmentRepository
 {

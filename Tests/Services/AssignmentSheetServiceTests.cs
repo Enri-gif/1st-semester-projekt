@@ -2,6 +2,7 @@ using api.Data;
 using api.Services;
 using FluentAssertions;
 using Moq;
+using api.Interfaces;
 
 namespace Tests.ServiceTests;
 
