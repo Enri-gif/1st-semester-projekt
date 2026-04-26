@@ -74,7 +74,10 @@ public class AssignmentSheetController : ControllerBase
             Level = dto.Level,
             Year = dto.Year,
             Owner = string.IsNullOrWhiteSpace(dto.Owner) ? "Prøvebank" : dto.Owner,
-            Type = dto.Type
+            Type = dto.Type,
+            Topic = dto.Topic ?? "",
+            Education = dto.Education ?? "",
+            Tags = dto.Tags ?? new List<string>()
         };
 
         var created = await _assignmentSheetService.CreateAssignmentSheet(sheet, dto.AssignmentIds);
@@ -100,7 +103,10 @@ public class AssignmentSheetController : ControllerBase
             Level = dto.Level,
             Year = dto.Year,
             Owner = string.IsNullOrWhiteSpace(dto.Owner) ? "Prøvebank" : dto.Owner,
-            Type = dto.Type
+            Type = dto.Type,
+            Topic = dto.Topic ?? "",
+            Education = dto.Education ?? "",
+            Tags = dto.Tags ?? new List<string>()
         };
 
         var updated = await _assignmentSheetService.UpdateAssignmentSheet(sheet, dto.AssignmentIds);
