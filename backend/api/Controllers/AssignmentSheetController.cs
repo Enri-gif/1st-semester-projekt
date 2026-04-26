@@ -145,7 +145,19 @@ public class AssignmentSheetController : ControllerBase
             return NotFound();
         }
 
-        var bytes = _spreadsheetService.GenerateAssignmentSheetSpreadsheet(sheet, marking);
+        byte[] bytes;
+        try
+        {
+            bytes = _spreadsheetService.GenerateAssignmentSheetSpreadsheet(sheet, marking);
+        }
+        catch (Exception ex)
+        {
+            return Problem(
+                title: "Failed to generate spreadsheet.",
+                detail: ex.Message,
+                statusCode: StatusCodes.Status500InternalServerError);
+        }
+
         var suffix = marking ? "retteark" : "regneark";
         var safeTitle = string.IsNullOrWhiteSpace(sheet.Title) ? "opgavesaet" : sheet.Title;
         var filename = $"{safeTitle}-{suffix}.xlsx";
