@@ -152,7 +152,7 @@ else if (result != null)
         }
     }
 
-    private void Reset()
+    private async Task Reset()
     {
         subject = level = topic = owner = tag = "";
         year = null;
@@ -160,7 +160,7 @@ else if (result != null)
         sortDir = "desc";
         page = 1;
         pageSize = 20;
-        _ = Search();
+        await Search();
     }
 
     private async Task PrevPage()
