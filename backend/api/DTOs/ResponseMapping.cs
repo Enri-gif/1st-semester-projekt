@@ -18,7 +18,8 @@ public static class ResponseMapping
             s.EffectiveSubject(), s.EffectiveLevel(),
             s.Year, s.EffectiveOwner(), s.Type,
             s.EffectiveTopic(), s.EffectiveEducation(),
-            s.EffectiveTags());
+            s.EffectiveTags(),
+            s.Grade ?? "", s.Feedback ?? "", s.CorrectionNotes ?? "");
 
     public static StudentResponseDTO ToResponse(this Student s)
         => new(

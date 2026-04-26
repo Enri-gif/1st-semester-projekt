@@ -12,4 +12,7 @@ public record AssignmentSheetResponseDTO(
     AssignmentSheetType Type,
     string Topic,
     string Education,
-    IReadOnlyList<string> Tags);
+    IReadOnlyList<string> Tags,
+    string Grade,
+    string Feedback,
+    string CorrectionNotes);

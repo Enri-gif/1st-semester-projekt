@@ -51,6 +51,9 @@ public class AssignmentSheetRepository : IAssignmentSheetRepository
         existing.Topic = sheet.Topic;
         existing.Education = sheet.Education;
         existing.Tags = sheet.Tags ?? new List<string>();
+        existing.Grade = sheet.Grade;
+        existing.Feedback = sheet.Feedback;
+        existing.CorrectionNotes = sheet.CorrectionNotes;
 
         await _dbContext.SaveChangesAsync();
         return true;

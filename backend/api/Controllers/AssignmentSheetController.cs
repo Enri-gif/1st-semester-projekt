@@ -106,7 +106,10 @@ public class AssignmentSheetController : ControllerBase
             Type = dto.Type,
             Topic = dto.Topic ?? "",
             Education = dto.Education ?? "",
-            Tags = dto.Tags ?? new List<string>()
+            Tags = dto.Tags ?? new List<string>(),
+            Grade = dto.Grade ?? "",
+            Feedback = dto.Feedback ?? "",
+            CorrectionNotes = dto.CorrectionNotes ?? ""
         };
 
         var updated = await _assignmentSheetService.UpdateAssignmentSheet(sheet, dto.AssignmentIds);

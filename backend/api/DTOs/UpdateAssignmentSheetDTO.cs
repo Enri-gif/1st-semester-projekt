@@ -16,6 +16,10 @@ public class UpdateAssignmentSheetDTO
     public string Education { get; set; } = "";
     public List<string> Tags { get; set; } = new();
 
+    public string Grade { get; set; } = "";
+    public string Feedback { get; set; } = "";
+    public string CorrectionNotes { get; set; } = "";
+
     // Replace the set of assignments attached to this sheet. If null, assignments are left untouched.
     public List<Guid>? AssignmentIds { get; set; }
 }

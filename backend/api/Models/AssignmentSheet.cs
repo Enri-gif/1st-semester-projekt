@@ -21,6 +21,11 @@ public class AssignmentSheet
     public string Education { get; set; } = "";
     public List<string> Tags { get; set; } = new List<string>();
 
+    // Teacher correction context — populated when a sheet has been graded.
+    public string Grade { get; set; } = "";
+    public string Feedback { get; set; } = "";
+    public string CorrectionNotes { get; set; } = "";
+
     public List<Assignment> Assignments { get; set; } = new List<Assignment>();
 
     [Timestamp]
