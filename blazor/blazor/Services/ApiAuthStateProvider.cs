@@ -46,10 +46,12 @@ public class ApiAuthStateProvider : AuthenticationStateProvider
         }
     }
 
-    public void NotifyUserAuthenticated()
+    public async Task NotifyUserAuthenticatedAsync()
     {
         _cached = null;
-        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        var stateTask = GetAuthenticationStateAsync();
+        NotifyAuthenticationStateChanged(stateTask);
+        await stateTask;
     }
 
     public void NotifyUserSignedOut()
