@@ -25,8 +25,11 @@ public class SpreadsheetServiceTests
     [Fact]
     public void Generates_Regneark_With_Five_Header_Columns()
     {
+        // Arrange
+        // Act
         var bytes = new SpreadsheetService().GenerateAssignmentSheetSpreadsheet(SampleSheet(), markingSheet: false);
 
+        // Assert
         bytes.Should().NotBeNullOrEmpty();
         using var ms = new MemoryStream(bytes);
         using var wb = new XLWorkbook(ms);
@@ -38,8 +41,11 @@ public class SpreadsheetServiceTests
     [Fact]
     public void Generates_Retteark_With_Six_Header_Columns_And_SumFormula()
     {
+        // Arrange
+        // Act
         var bytes = new SpreadsheetService().GenerateAssignmentSheetSpreadsheet(SampleSheet(), markingSheet: true);
 
+        // Assert
         using var ms = new MemoryStream(bytes);
         using var wb = new XLWorkbook(ms);
         var ws = wb.Worksheets.First();
