@@ -1,4 +1,5 @@
 using api.Data;
+using api.DTOs;
 using api.Services;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
@@ -47,5 +48,6 @@ public class AuthController : ControllerBase
         logger.LogInformation("Login succeeded for {UserName} with role {Role}", user.UserName, firstRole);
         return Ok (new LoginResult { Token = token, Role = firstRole });
     }
+
 }
 
