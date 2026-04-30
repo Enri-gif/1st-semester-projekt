@@ -17,7 +17,7 @@ public class MongoVideoService{
             BucketName = "videos"
         });
 
-        _apiBaseUrl = config["ApiBaseUrl"] ?? "https://localhost:5000";
+        _apiBaseUrl = config["ApiBaseUrl"] ?? "https://localhost:5001";
     }
 
     public async Task<ObjectId> UploadVideoAsync(byte[] fileBytes, string fileName, List<string> assignmentIds, string contentType = "video/mp4"){
