@@ -49,7 +49,7 @@ Blazor WebAssembly frontend + ASP.NET Core Web API backend, with SQL Server (EF 
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Admin | `admin@example.com` | `Admin1234!` |
+| Admin | `admin@admin.com` | `Admin1234!` |
 | Teacher | `teacher@teacher.com` | `Teacher1234!` |
 | Student | `student@student.com` | `Student1234!` |
 
