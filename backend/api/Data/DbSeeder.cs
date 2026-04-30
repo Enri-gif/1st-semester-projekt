@@ -33,7 +33,7 @@ public class DbSeeder
 
         var users = new[]
         {
-            new { Email = "admin@example.com", Password = "Admin1234!", Role = Roles.Admin },
+            new { Email = "admin@admin.com", Password = "Admin1234!", Role = Roles.Admin },
             new { Email = "teacher@teacher.com", Password = "Teacher1234!", Role = Roles.Teacher },
             new { Email = "student@student.com", Password = "Student1234!", Role = Roles.Student }
         };

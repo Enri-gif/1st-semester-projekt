@@ -20,23 +20,29 @@ public class AssignmentSheetRepositoryTests
     [Fact]
     public async Task DeleteAsync_ReturnsFalse_WhenSheetMissing()
     {
+        // Arrange
         var (repo, _) = Build();
 
+        // Act
         var result = await repo.DeleteAsync(Guid.NewGuid());
 
+        // Assert
         result.Should().BeFalse();
     }
 
     [Fact]
     public async Task DeleteAsync_RemovesSheet_AndReturnsTrue()
     {
+        // Arrange
         var (repo, ctx) = Build();
         var sheet = new AssignmentSheet { Id = Guid.NewGuid(), Title = "Test" };
         ctx.AssignmentSheets.Add(sheet);
         await ctx.SaveChangesAsync();
 
+        // Act
         var result = await repo.DeleteAsync(sheet.Id);
 
+        // Assert
         result.Should().BeTrue();
         (await ctx.AssignmentSheets.FindAsync(sheet.Id)).Should().BeNull();
     }
@@ -44,6 +50,7 @@ public class AssignmentSheetRepositoryTests
     [Fact]
     public async Task DeleteAsync_LeavesAssignmentsIntact_AndSetsFkToNull()
     {
+        // Arrange
         var (repo, ctx) = Build();
         var sheetId = Guid.NewGuid();
         var assignmentId = Guid.NewGuid();
@@ -57,8 +64,10 @@ public class AssignmentSheetRepositoryTests
         });
         await ctx.SaveChangesAsync();
 
+        // Act
         var deleted = await repo.DeleteAsync(sheetId);
 
+        // Assert
         deleted.Should().BeTrue();
         var surviving = await ctx.Assignments.FindAsync(assignmentId);
         surviving.Should().NotBeNull();
