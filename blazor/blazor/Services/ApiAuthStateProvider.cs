@@ -1,3 +1,4 @@
+using Shared.Contracts;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
 using System.Security.Claims;
