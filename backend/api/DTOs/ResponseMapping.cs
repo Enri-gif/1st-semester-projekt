@@ -13,7 +13,13 @@ public static class ResponseMapping
             a.Tags ?? new List<string>(), a.AssignmentSheetId);
 
     public static AssignmentSheetResponseDTO ToResponse(this AssignmentSheet s)
-        => new(s.Id, s.Title, s.Subject, s.Level, s.Year, s.Owner, s.Type);
+        => new(
+            s.Id, s.Title,
+            s.EffectiveSubject(), s.EffectiveLevel(),
+            s.Year, s.EffectiveOwner(), s.Type,
+            s.EffectiveTopic(), s.EffectiveEducation(),
+            s.EffectiveTags(),
+            s.Grade ?? "", s.Feedback ?? "", s.CorrectionNotes ?? "");
 
     public static StudentResponseDTO ToResponse(this Student s)
         => new(

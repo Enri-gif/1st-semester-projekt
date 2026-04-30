@@ -5,6 +5,7 @@ using api.Models;
 using api.Services;
 using api.Validators;
 using FluentAssertions;
+using Shared.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

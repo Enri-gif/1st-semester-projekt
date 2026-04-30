@@ -1,4 +1,5 @@
 @page "/edit-assignment-sheet"
+@using Shared.Contracts
 @using Shared
 @using blazor.models
 @using System.Net.Http.Json
@@ -27,45 +28,18 @@
         <div class="opgaver-container">
             <div class="opgave-block">
                 <div class="opgave-inputs">
-                    <label>Titel</label>
-                    <input type="text" @bind="form.Title" />
+                    <h2>@form.Title</h2>
 
-                    <label>Fag</label>
-                    <input type="text" @bind="form.Subject" />
+                    <label>Karakter</label>
+                    <input type="text" @bind="form.Grade" placeholder="f.eks. 12" />
 
-                    <label>Niveau</label>
-                    <input type="text" @bind="form.Level" />
+                    <label>Tilbagemelding til elev</label>
+                    <textarea rows="4" @bind="form.Feedback"></textarea>
 
-                    <label>År</label>
-                    <input type="number" @bind="form.Year" />
+                    <label>Rettenoter (intern)</label>
+                    <textarea rows="4" @bind="form.CorrectionNotes"></textarea>
 
-                    <label>Ejer</label>
-                    <input type="text" @bind="form.Owner" />
-
-                    <label>Type</label>
-                    <select @bind="form.Type">
-                        <option value="Hjemmeopgave">Hjemmeopgave</option>
-                        <option value="Proeve">Prøve</option>
-                    </select>
-
-                    <label>Opgaver (vælg de opgaver der skal indgå)</label>
-                    <input placeholder="Filter…" @bind="filter" @bind:event="oninput" />
-                    <div style="max-height:260px;overflow:auto;border:1px solid #ccc;padding:6px;">
-                        @foreach (var a in FilteredAssignments)
-                        {
-                            <label style="display:block;">
-                                <input type="checkbox"
-                                       checked="@form.AssignmentIds!.Contains(a.Id)"
-                                       @onchange="e => ToggleAssignment(a.Id, (bool)e.Value!)" />
-                                @a.Subject — @a.Topic (Opg. @a.Number, @a.Points p.)
-                            </label>
-                        }
-                    </div>
-                    <small>@form.AssignmentIds!.Count valgt</small>
-
-                    <button @onclick="Save" disabled="@string.IsNullOrWhiteSpace(form.Title)">
-                        Gem ændringer
-                    </button>
+                    <button @onclick="Save">Gem rettelse</button>
                 </div>
             </div>
         </div>
@@ -79,10 +53,8 @@
 
 @code {
     private List<AssignmentSheetSummary> sheets = new();
-    private List<Assignment> allAssignments = new();
     private string selectedId = "";
-    private string filter = "";
-    private UpdateAssignmentSheetDTO? form;
+    private CorrectionForm? form;
     private string status = "";
 
     protected override async Task OnInitializedAsync()
@@ -90,32 +62,10 @@
         try
         {
             sheets = await Http.GetFromJsonAsync<List<AssignmentSheetSummary>>("api/assignmentsheet") ?? new();
-            var paged = await Http.GetFromJsonAsync<PagedResult<Assignment>>("api/assignment?pageSize=200");
-            allAssignments = paged?.Items ?? new();
         }
         catch (Exception ex)
         {
             status = $"Kunne ikke hente data: {ex.Message}";
-        }
-    }
-
-    private IEnumerable<Assignment> FilteredAssignments =>
-        string.IsNullOrWhiteSpace(filter)
-            ? allAssignments
-            : allAssignments.Where(a =>
-                (a.Subject?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (a.Topic?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false));
-
-    private void ToggleAssignment(Guid id, bool isChecked)
-    {
-        if (form?.AssignmentIds is null) return;
-        if (isChecked)
-        {
-            if (!form.AssignmentIds.Contains(id)) form.AssignmentIds.Add(id);
-        }
-        else
-        {
-            form.AssignmentIds.Remove(id);
         }
     }
 
@@ -127,12 +77,7 @@
             var sheet = await Http.GetFromJsonAsync<AssignmentSheetSummary>($"api/assignmentsheet/{selectedId}");
             if (sheet is null) { status = "Opgavesæt ikke fundet."; return; }
 
-            var currentAssignmentIds = allAssignments
-                .Where(a => a.AssignmentSheetId == sheet.Id)
-                .Select(a => a.Id)
-                .ToList();
-
-            form = new UpdateAssignmentSheetDTO
+            form = new CorrectionForm
             {
                 Title = sheet.Title,
                 Subject = sheet.Subject,
@@ -140,7 +85,9 @@
                 Year = sheet.Year,
                 Owner = sheet.Owner,
                 Type = sheet.Type,
-                AssignmentIds = currentAssignmentIds
+                Grade = sheet.Grade ?? "",
+                Feedback = sheet.Feedback ?? "",
+                CorrectionNotes = sheet.CorrectionNotes ?? ""
             };
             status = "";
         }
@@ -156,8 +103,8 @@
         var response = await Http.PutAsJsonAsync($"api/assignmentsheet/{selectedId}", form);
         if (response.IsSuccessStatusCode)
         {
-            status = $"Opgavesæt '{form.Title}' opdateret.";
-            await Task.Delay(1200);
+            status = $"Rettelse gemt for '{form.Title}'.";
+            await Task.Delay(800);
             Navigation.NavigateTo("/assignment-sheet-overview");
         }
         else
@@ -175,9 +122,15 @@
         public int Year { get; set; }
         public string Owner { get; set; } = "";
         public AssignmentSheetType Type { get; set; }
+        public string? Grade { get; set; }
+        public string? Feedback { get; set; }
+        public string? CorrectionNotes { get; set; }
     }
 
-    public class UpdateAssignmentSheetDTO
+    // Server-side UpdateAssignmentSheetDTO carries metadata fields too; we
+    // simply preserve what we loaded for them and surface only the correction
+    // fields to the teacher.
+    public class CorrectionForm
     {
         public string Title { get; set; } = "";
         public string Subject { get; set; } = "";
@@ -185,6 +138,8 @@
         public int Year { get; set; } = DateTime.Today.Year;
         public string Owner { get; set; } = "Prøvebank";
         public AssignmentSheetType Type { get; set; } = AssignmentSheetType.Hjemmeopgave;
-        public List<Guid>? AssignmentIds { get; set; } = new();
+        public string Grade { get; set; } = "";
+        public string Feedback { get; set; } = "";
+        public string CorrectionNotes { get; set; } = "";
     }
 }

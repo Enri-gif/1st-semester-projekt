@@ -1,9 +1,10 @@
 @page "/statistik-elev"
+@using Shared.Contracts
 @using Shared
 @using blazor.models
 @using System.Globalization
 @using System.Net.Http.Json
-@attribute [Authorize(Roles = Roles.StudentOrTeacher)]
+@attribute [Authorize(Policy = "StudentOrTeacher")]
 @inject HttpClient Http
 
 <PageTitle>Statistik</PageTitle>

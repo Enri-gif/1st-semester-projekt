@@ -5,6 +5,7 @@ using api.DTOs;
 using api.Models;
 using api.Services;
 using Shared;
+using Shared.Contracts;
 
 namespace api.Controllers;
 

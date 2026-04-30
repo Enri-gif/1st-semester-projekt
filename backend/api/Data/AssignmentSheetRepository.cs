@@ -3,40 +3,25 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.Data;
 
-public class AssignmentSheetRepository : IAssignmentSheetRepository
+public class AssignmentSheetRepository : Repository<AssignmentSheet>, IAssignmentSheetRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public AssignmentSheetRepository(ApplicationDbContext dbContext)
+    public AssignmentSheetRepository(ApplicationDbContext db) : base(db)
     {
-        _dbContext = dbContext;
     }
 
-    public async Task<IEnumerable<AssignmentSheet>> GetAllAsync()
+    public override async Task<AssignmentSheet?> GetByIdAsync(Guid id)
     {
-        return await _dbContext.AssignmentSheets
-            .AsNoTracking()
-            .ToListAsync();
-    }
-
-    public async Task<AssignmentSheet?> GetByIdAsync(Guid id)
-    {
-        return await _dbContext.AssignmentSheets
+        return await _set
             .AsNoTracking()
             .Include(s => s.Assignments)
             .FirstOrDefaultAsync(s => s.Id == id);
     }
 
-    public async Task<AssignmentSheet> CreateAsync(AssignmentSheet sheet)
-    {
-        _dbContext.AssignmentSheets.Add(sheet);
-        await _dbContext.SaveChangesAsync();
-        return sheet;
-    }
+    public Task<AssignmentSheet> CreateAsync(AssignmentSheet sheet) => AddAsync(sheet);
 
     public async Task<bool> UpdateAsync(AssignmentSheet sheet)
     {
-        var existing = await _dbContext.AssignmentSheets.FindAsync(sheet.Id);
+        var existing = await _set.FindAsync(sheet.Id);
         if (existing == null)
         {
             return false;
@@ -48,30 +33,32 @@ public class AssignmentSheetRepository : IAssignmentSheetRepository
         existing.Year = sheet.Year;
         existing.Owner = sheet.Owner;
         existing.Type = sheet.Type;
+        existing.Topic = sheet.Topic;
+        existing.Education = sheet.Education;
+        existing.Tags = sheet.Tags ?? new List<string>();
+        existing.Grade = sheet.Grade;
+        existing.Feedback = sheet.Feedback;
+        existing.CorrectionNotes = sheet.CorrectionNotes;
 
-        await _dbContext.SaveChangesAsync();
+        await _db.SaveChangesAsync();
         return true;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var sheet = await _dbContext.AssignmentSheets.FindAsync(id);
+        var sheet = await _set.FindAsync(id);
         if (sheet == null)
         {
             return false;
         }
-
-        _dbContext.AssignmentSheets.Remove(sheet);
-        await _dbContext.SaveChangesAsync();
-        return true;
+        return await RemoveAsync(sheet);
     }
 
     public async Task SetAssignmentsAsync(Guid sheetId, IEnumerable<Guid> assignmentIds)
     {
         var ids = assignmentIds?.ToHashSet() ?? new HashSet<Guid>();
 
-        // Null the FK on assignments that were attached to this sheet but are no longer in the set
-        var currentlyAttached = await _dbContext.Assignments
+        var currentlyAttached = await _db.Assignments
             .Where(a => a.AssignmentSheetId == sheetId)
             .ToListAsync();
 
@@ -80,10 +67,9 @@ public class AssignmentSheetRepository : IAssignmentSheetRepository
             a.AssignmentSheetId = null;
         }
 
-        // Attach newly-selected assignments that weren't already attached elsewhere to this sheet
         if (ids.Count > 0)
         {
-            var toAttach = await _dbContext.Assignments
+            var toAttach = await _db.Assignments
                 .Where(a => ids.Contains(a.Id))
                 .ToListAsync();
 
@@ -93,6 +79,6 @@ public class AssignmentSheetRepository : IAssignmentSheetRepository
             }
         }
 
-        await _dbContext.SaveChangesAsync();
+        await _db.SaveChangesAsync();
     }
 }

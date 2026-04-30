@@ -9,4 +9,10 @@ public record AssignmentSheetResponseDTO(
     string Level,
     int Year,
     string Owner,
-    AssignmentSheetType Type);
+    AssignmentSheetType Type,
+    string Topic,
+    string Education,
+    IReadOnlyList<string> Tags,
+    string Grade,
+    string Feedback,
+    string CorrectionNotes);
