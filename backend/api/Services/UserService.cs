@@ -1,3 +1,4 @@
+using api.Data;
 using Microsoft.AspNetCore.Identity;
 using api.Interfaces;
 
@@ -5,14 +6,14 @@ namespace api.Services;
 
 public class UserService : IUserService
 {
-    private readonly UserManager<IdentityUser> userManager;
+    private readonly UserManager<ApplicationUser> userManager;
 
-    public UserService(UserManager<IdentityUser> userManager)
+    public UserService(UserManager<ApplicationUser> userManager)
     {
         this.userManager = userManager;
     }
 
-    public async Task<IdentityUser?> ValidateUser(string username, string password)
+    public async Task<ApplicationUser?> ValidateUser(string username, string password)
     {
         var user = await userManager.FindByNameAsync(username);
 

@@ -28,13 +28,16 @@ public class StudentsControllerTests
     [ClassData(typeof(CreateStudentDTOTestData))]
     public async Task CreateStudent_WithClassData_Succeeds(CreateStudentDTO student)
     {
+        // Arrange
         var studentCon = CreateController();
         studentService
             .Setup(s => s.AddStudent(It.Is<Student>(st => st.FirstName == student.FirstName && st.LastName == student.LastName)))
             .ReturnsAsync(true);
 
+        // Act
         var result = await studentCon.CreateStudent(student);
 
+        // Assert
         result.Should().BeOfType<ActionResult<StudentResponseDTO>>();
         var created = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
         var saved = created.Value.Should().BeOfType<StudentResponseDTO>().Subject;
@@ -95,12 +98,15 @@ public class StudentsControllerTests
     [Fact]
     public async Task DeleteStudent_WhenStudentExists_Succeeds()
     {
+        // Arrange
         var studentsCon = CreateController();
         var id = Guid.NewGuid();
         studentService.Setup(s => s.DeleteStudent(id)).ReturnsAsync(true);
 
+        // Act
         var result = await studentsCon.DeleteStudent(id);
 
+        // Assert
         result.Should().BeOfType<NoContentResult>();
         studentService.Verify(s => s.DeleteStudent(id), Times.Once);
     }
@@ -108,12 +114,15 @@ public class StudentsControllerTests
     [Fact]
     public async Task DeleteStudent_ReturnsNotFound_WhenStudentDoesntExist()
     {
+        // Arrange
         var studentsCon = CreateController();
         var id = Guid.NewGuid();
         studentService.Setup(s => s.DeleteStudent(id)).ReturnsAsync(false);
 
+        // Act
         var result = await studentsCon.DeleteStudent(id);
 
+        // Assert
         result.Should().BeOfType<NotFoundResult>();
         studentService.Verify(s => s.DeleteStudent(id), Times.Once);
     }

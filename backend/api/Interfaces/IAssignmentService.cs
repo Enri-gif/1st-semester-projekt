@@ -1,5 +1,6 @@
 using api.DTOs;
 using api.Models;
+using Shared.Contracts;
 
 namespace api.Interfaces;
 

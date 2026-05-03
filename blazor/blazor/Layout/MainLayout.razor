@@ -1,4 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -6,6 +9,20 @@
 
     <main>
         <div class="top-row px-4">
+            <div class="left">
+            <AuthorizeView>
+                <Authorized>
+                    <span>@(context.User.Identity?.Name)</span>
+
+                    <button @onclick="Logout">Logout</button>
+                </Authorized>
+
+                <NotAuthorized>
+                    <a href="/login">Login</a>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
         </div>
 
@@ -14,3 +31,12 @@
         </article>
     </main>
 </div>
+
+
+@code {
+    private async Task Logout ()
+    {
+        await Http.PostAsync("api/account/logout", null);
+        NavManager.NavigateTo("/", forceLoad: true);
+    }
+}

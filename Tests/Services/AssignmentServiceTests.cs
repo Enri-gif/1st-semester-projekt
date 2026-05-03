@@ -22,16 +22,20 @@ public class AssignmentServiceTests
     [Fact]
     public async Task GetFiltered_Clamps_PageSize_To_100()
     {
+        // Arrange
         var (svc, _) = Build();
 
+        // Act
         var result = await svc.GetFiltered(null, null, null, null, null, null, null, page: 1, pageSize: 9999, sortBy: null, sortDir: null);
 
+        // Assert
         result.PageSize.Should().Be(100);
     }
 
     [Fact]
     public async Task GetFiltered_FiltersByTag()
     {
+        // Arrange
         var (svc, ctx) = Build();
         ctx.Assignments.AddRange(
             new Assignment { Id = Guid.NewGuid(), Subject = "M", Tags = new() { "calc", "easy" } },
@@ -39,14 +43,17 @@ public class AssignmentServiceTests
         );
         await ctx.SaveChangesAsync();
 
+        // Act
         var result = await svc.GetFiltered(null, null, null, null, null, "calc", null, 1, 20, null, null);
 
+        // Assert
         result.Total.Should().Be(1);
     }
 
     [Fact]
     public async Task GetFiltered_DefaultSort_IsByDate_Descending()
     {
+        // Arrange
         var (svc, ctx) = Build();
         var older = DateTime.Today.AddDays(-3);
         var newer = DateTime.Today;
@@ -56,8 +63,10 @@ public class AssignmentServiceTests
         );
         await ctx.SaveChangesAsync();
 
+        // Act
         var result = await svc.GetFiltered(null, null, null, null, null, null, null, 1, 20, null, "desc");
 
+        // Assert
         result.Items.First().Date.Should().Be(newer);
     }
 }

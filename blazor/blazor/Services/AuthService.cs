@@ -14,13 +14,13 @@ public class AuthService : IAuthService
         this.authStateProvider = authStateProvider;
     }
 
-    public void SetToken(string token)
+    public async Task SetTokenAsync(string token)
     {
         http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
         if (authStateProvider is ApiAuthStateProvider api)
         {
-            api.NotifyUserAuthenticated();
+            await api.NotifyUserAuthenticatedAsync();
         }
     }
 

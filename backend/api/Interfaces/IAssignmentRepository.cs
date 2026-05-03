@@ -1,13 +1,8 @@
+using api.Data;
 using api.Models;
 
 namespace api.Interfaces;
 
-public interface IAssignmentRepository
+public interface IAssignmentRepository : IRepository<Assignment>
 {
-    Task<Assignment> AddAsync(Assignment assignment);
-    Task<Assignment?> GetByIdAsync(Guid id);
-    Task<IEnumerable<Assignment>> GetAllAsync();
-    Task<bool> RemoveAsync(Assignment assignment);
-    IQueryable<Assignment> Query();
-    Task<int> SaveChangesAsync();
 }

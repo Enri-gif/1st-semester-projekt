@@ -2,6 +2,6 @@ namespace blazor.Interfaces;
 
 public interface IAuthService
 {
-    void SetToken(string token);
+    Task SetTokenAsync(string token);
     void SignOut();
 }

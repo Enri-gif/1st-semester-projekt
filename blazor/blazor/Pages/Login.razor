@@ -27,7 +27,7 @@
             var result = await response.Content.ReadFromJsonAsync<LoginResult>();
             if (result != null)
             {
-                AuthService.SetToken(result.Token);
+                await AuthService.SetTokenAsync(result.Token);
 
                 var target = result.Role switch
                 {
@@ -37,10 +37,8 @@
                     _ => "/home"
                 };
 
-                message = $"Login lykkedes! Omdirigerer automatisk, vent venligst et øjeblik...";
+                message = $"Login lykkedes! Omdirigerer automatisk...";
                 StateHasChanged();
-
-                await Task.Delay(3000);
 
                 NavManager.NavigateTo(target);
             }

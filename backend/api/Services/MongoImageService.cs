@@ -14,7 +14,7 @@ public class MongoImageService{
         _database = client.GetDatabase(config["MongoDb:Database"]);
         _gridFS = new GridFSBucket(_database);
         
-        _apiBaseUrl = config["ApiBaseUrl"] ?? "https://localhost:5000";
+        _apiBaseUrl = config["ApiBaseUrl"] ?? "https://localhost:5001";
     }
 
     public async Task<ObjectId> UploadImageAsync(byte[] fileBytes, string fileName, string assignmentId, string contentType = "image/jpeg"){

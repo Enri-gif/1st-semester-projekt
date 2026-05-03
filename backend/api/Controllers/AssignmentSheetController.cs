@@ -75,7 +75,10 @@ public class AssignmentSheetController : ControllerBase
             Level = dto.Level,
             Year = dto.Year,
             Owner = string.IsNullOrWhiteSpace(dto.Owner) ? "Prøvebank" : dto.Owner,
-            Type = dto.Type
+            Type = dto.Type,
+            Topic = dto.Topic ?? "",
+            Education = dto.Education ?? "",
+            Tags = dto.Tags ?? new List<string>()
         };
 
         var created = await _assignmentSheetService.CreateAssignmentSheet(sheet, dto.AssignmentIds);
@@ -101,7 +104,13 @@ public class AssignmentSheetController : ControllerBase
             Level = dto.Level,
             Year = dto.Year,
             Owner = string.IsNullOrWhiteSpace(dto.Owner) ? "Prøvebank" : dto.Owner,
-            Type = dto.Type
+            Type = dto.Type,
+            Topic = dto.Topic ?? "",
+            Education = dto.Education ?? "",
+            Tags = dto.Tags ?? new List<string>(),
+            Grade = dto.Grade ?? "",
+            Feedback = dto.Feedback ?? "",
+            CorrectionNotes = dto.CorrectionNotes ?? ""
         };
 
         var updated = await _assignmentSheetService.UpdateAssignmentSheet(sheet, dto.AssignmentIds);
@@ -146,7 +155,19 @@ public class AssignmentSheetController : ControllerBase
             return NotFound();
         }
 
-        var bytes = _spreadsheetService.GenerateAssignmentSheetSpreadsheet(sheet, marking);
+        byte[] bytes;
+        try
+        {
+            bytes = _spreadsheetService.GenerateAssignmentSheetSpreadsheet(sheet, marking);
+        }
+        catch (Exception ex)
+        {
+            return Problem(
+                title: "Failed to generate spreadsheet.",
+                detail: ex.Message,
+                statusCode: StatusCodes.Status500InternalServerError);
+        }
+
         var suffix = marking ? "retteark" : "regneark";
         var safeTitle = string.IsNullOrWhiteSpace(sheet.Title) ? "opgavesaet" : sheet.Title;
         var filename = $"{safeTitle}-{suffix}.xlsx";

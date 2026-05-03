@@ -1,3 +1,4 @@
+using Shared.Contracts;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
 using System.Security.Claims;
@@ -46,10 +47,12 @@ public class ApiAuthStateProvider : AuthenticationStateProvider
         }
     }
 
-    public void NotifyUserAuthenticated()
+    public async Task NotifyUserAuthenticatedAsync()
     {
         _cached = null;
-        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        var stateTask = GetAuthenticationStateAsync();
+        NotifyAuthenticationStateChanged(stateTask);
+        await stateTask;
     }
 
     public void NotifyUserSignedOut()

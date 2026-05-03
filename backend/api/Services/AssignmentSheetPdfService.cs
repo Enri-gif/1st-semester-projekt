@@ -17,7 +17,7 @@ public class AssignmentSheetPdfService : IAssignmentSheetPdfService
 
     public byte[] GenerateAssignmentSheetPdf(AssignmentSheet sheet)
     {
-        var typeLabel = sheet.Type == AssignmentSheetType.Proeve ? "Prøve" : "Hjemmeopgave";
+        var typeLabel = sheet.Type.ToString();
 
         var document = Document.Create(container =>
         {

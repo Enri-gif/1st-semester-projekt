@@ -1,12 +1,9 @@
+using api.Data;
 using api.Models;
 
 namespace api.Interfaces;
 
-public interface IStudentRepository
+public interface IStudentRepository : IRepository<Student>
 {
-    Task<Student?> GetByIdAsync(Guid id);
     Task<IEnumerable<Student>> GetByClassAsync(string className);
-    Task AddAsync(Student student);
-    Task<bool> RemoveAsync(Student student);
-    Task<int> SaveChangesAsync();
 }

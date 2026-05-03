@@ -1,4 +1,4 @@
-namespace blazor.models;
+namespace Shared.Contracts;
 
 public class StatisticsDTO
 {
