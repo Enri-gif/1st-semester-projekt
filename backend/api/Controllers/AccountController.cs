@@ -99,4 +99,11 @@ public class AccountController : ControllerBase
         await HttpContext.SignOutAsync ();
         return Ok ();
     }
+
+    [HttpGet("req-test")]
+    public async Task<IActionResult> ReqTest ()
+    {
+        return Ok ("Hello from ReqTest.");
+    }
+
 }

@@ -6,5 +6,6 @@
     <Project Path="blazor/blazor/blazor.csproj" />
     <Project Path="Tests/Tests.csproj" Id="1b0e44c4-bc04-456b-811c-9d3a0eb9c117" />
   </Folder>
+  <Project Path="Reqnroll_API_ForBDD/Reqnroll_API_ForBDD.csproj" Id="815018c5-1ea9-44ec-b584-7ebd1d9418c5" />
   <Project Path="Shared/Shared.csproj" Id="fc56bd44-ee3f-4f81-bc39-a3a86b0fc69d" />
 </Solution>
