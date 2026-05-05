@@ -103,7 +103,7 @@ public class AccountController : ControllerBase
     [HttpGet("req-test")]
     public async Task<IActionResult> ReqTest ()
     {
-        return Ok ("Hello from ReqTest.");
+        return Ok("Hello from ReqTest. Bloink!");
     }
 
 }
