@@ -99,13 +99,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole> (options =>
 .AddEntityFrameworkStores<ApplicationDbContext> ()
 .AddDefaultTokenProviders ();
 
-var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace (jwtKey) || jwtKey.Length < 32)
 {
     throw new InvalidOperationException ("JWT key is missing or too short (min 32 chars).");
 }
-
-var key = new SymmetricSecurityKey (Encoding.UTF8.GetBytes (jwtKey));
 
 builder.Services.AddAuthentication (options =>
 {
