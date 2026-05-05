@@ -7,6 +7,7 @@ using api.Validators;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using api.Interfaces;
 
 namespace Tests.ControllerTests;
 

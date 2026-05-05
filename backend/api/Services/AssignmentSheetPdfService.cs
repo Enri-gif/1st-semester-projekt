@@ -2,6 +2,7 @@ using api.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using api.Interfaces;
 
 namespace api.Services;
 

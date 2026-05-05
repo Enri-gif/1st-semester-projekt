@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Tests.TestData;
+using api.Interfaces;
 
 namespace Tests.ControllerTests;
 

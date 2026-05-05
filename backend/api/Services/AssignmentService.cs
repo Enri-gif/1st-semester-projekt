@@ -2,6 +2,7 @@ using api.Data;
 using api.DTOs;
 using api.Models;
 using Microsoft.EntityFrameworkCore;
+using api.Interfaces;
 using Shared.Contracts;
 
 namespace api.Services;

@@ -2,7 +2,7 @@ using api.DTOs;
 using api.Models;
 using Shared.Contracts;
 
-namespace api.Services;
+namespace api.Interfaces;
 
 public interface IAssignmentService
 {

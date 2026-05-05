@@ -1,6 +1,7 @@
 using api.Data;
 using api.Models;
 using Microsoft.Extensions.Logging;
+using api.Interfaces;
 
 namespace api.Services;
 

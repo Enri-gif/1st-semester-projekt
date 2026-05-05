@@ -1,3 +1,4 @@
+using api.Interfaces;
 using api.Models;
 
 namespace api.Data;

@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
+using api.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 

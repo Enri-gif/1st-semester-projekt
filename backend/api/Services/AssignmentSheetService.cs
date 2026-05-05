@@ -1,6 +1,7 @@
 using api.Data;
 using api.DTOs;
 using api.Models;
+using api.Interfaces;
 
 namespace api.Services;
 
