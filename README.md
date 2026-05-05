@@ -13,10 +13,12 @@ Blazor WebAssembly frontend + ASP.NET Core Web API backend, with SQL Server (EF 
 
 ## Prerequisites
 
-- .NET 10 SDK
-- Docker (for SQL Server + MongoDB)
+- Docker (required — runs SQL Server, MongoDB, the API, and the Blazor client)
+- .NET 10 SDK (only needed if you want to run the API/Blazor outside Docker via `./run.sh`, or to run `dotnet test`)
 
-## Setup
+## Setup (Docker — recommended)
+
+`docker compose up -d` brings up the full stack: SQL Server, MongoDB, the API, and the Blazor client.
 
 1. **Copy environment file**
    ```sh
@@ -24,24 +26,38 @@ Blazor WebAssembly frontend + ASP.NET Core Web API backend, with SQL Server (EF 
    ```
    Edit `.env` and set the passwords.
 
-2. **Start databases**
+2. **Bring up the full stack**
    ```sh
    docker compose up -d
    ```
-   This brings up SQL Server on `localhost:1433` and MongoDB on `localhost:27017`.
+   Services:
+   - SQL Server: `localhost:1433`
+   - MongoDB: `localhost:27017`
+   - API: <http://localhost:5000> (OpenAPI: <http://localhost:5000/openapi/v1.json>)
+   - Blazor client: <http://localhost:5050>
 
-3. **Apply EF migrations**
+   The Blazor client (`blazor/blazor/wwwroot/appsettings.json` → `ApiBaseUrl`) is configured to call the API at `http://localhost:5000`. The Docker setup only exposes the API over HTTP on port 5000 — there is no HTTPS endpoint inside Docker.
+
+3. **Apply EF migrations** (only needed the first time, or after a schema change)
    ```sh
    dotnet ef database update --project backend/api
    ```
 
-4. **Run backend + Blazor together** (two `dotnet watch` processes)
-   ```sh
-   ./run.sh     # macOS / Linux
-   ./run.ps1    # Windows PowerShell
-   ```
-   - API: <http://localhost:5000> / <https://localhost:5001> (OpenAPI: <http://localhost:5000/openapi/v1.json>)
-   - Blazor: <http://localhost:5050> / <https://localhost:5051>
+## Setup (local dev without Docker for the apps)
+
+If you want hot-reload via `dotnet watch` instead of the `api` / `blazor` containers, bring up just the databases and run the apps locally:
+
+```sh
+docker compose up -d sqlserver mongodb
+dotnet ef database update --project backend/api
+./run.sh     # macOS / Linux
+./run.ps1    # Windows PowerShell
+```
+
+- API: <http://localhost:5000> / <https://localhost:5001> (OpenAPI: <http://localhost:5000/openapi/v1.json>)
+- Blazor: <http://localhost:5050> / <https://localhost:5051>
+
+`ApiBaseUrl` is `http://localhost:5000`, which both `dotnet watch` and Docker bind, so the same client config works in either mode.
 
 ## Seeded accounts
 
