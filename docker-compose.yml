@@ -41,7 +41,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: "${MONGO_ROOT_USERNAME}"
       MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASSWORD}"
     healthcheck:
-      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ping:1}).ok' | grep -q 1"]
+      test: ["CMD-SHELL", "mongosh --quiet --username \"$$MONGO_INITDB_ROOT_USERNAME\" --password \"$$MONGO_INITDB_ROOT_PASSWORD\" --authenticationDatabase admin --eval 'db.adminCommand({ping:1}).ok || quit(1)'"]
       interval: 10s
       timeout: 5s
       retries: 6
