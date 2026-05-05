@@ -15,10 +15,10 @@ namespace api.Controllers;
 public class AssignmentController : ControllerBase
 {
     private readonly IAssignmentService _assignmentService;
-    private readonly MongoImageService _mongoImageService;
+    private readonly IMongoImageService _mongoImageService;
     private readonly IValidator<CreateAssignmentDTO> _validator;
 
-    public AssignmentController(IAssignmentService assignmentService, MongoImageService mongoImageService, IValidator<CreateAssignmentDTO> validator)
+    public AssignmentController(IAssignmentService assignmentService, IMongoImageService mongoImageService, IValidator<CreateAssignmentDTO> validator)
     {
         _mongoImageService = mongoImageService;
         _assignmentService = assignmentService;

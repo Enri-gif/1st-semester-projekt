@@ -4,7 +4,7 @@ using MongoDB.Driver.GridFS;
 
 namespace api.Services;
 
-public class MongoImageService{
+public class MongoImageService : IMongoImageService{
     private readonly IMongoDatabase _database;
     private readonly GridFSBucket _gridFS;
     private readonly string _apiBaseUrl;

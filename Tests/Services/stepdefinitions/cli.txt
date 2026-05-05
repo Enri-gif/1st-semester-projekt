@@ -1,0 +1,1 @@
+dotnet test Tests/ --filter "FeatureTitle=Delete Assignment" --logger "console;verbosity=detailed"
