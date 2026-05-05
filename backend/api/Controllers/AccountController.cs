@@ -93,7 +93,7 @@ public class AccountController : ControllerBase
     }
 
     [HttpPost ("logout")]
-    [Authorize]
+    [Authorize]a
     public async Task<IActionResult> Logout ()
     {
         await HttpContext.SignOutAsync ();

@@ -31,6 +31,7 @@ public class StudentService : IStudentService
         if (string.IsNullOrEmpty(student.FirstName))
         {
             logger.LogWarning("AddStudent rejected: FirstName is empty");
+
             return false;
         }
 
@@ -81,6 +82,7 @@ public class StudentService : IStudentService
 
         await repo.RemoveAsync(student);
         logger.LogInformation("DeleteStudent: deleted student {StudentId}", id);
+
         return true;
     }
 }
