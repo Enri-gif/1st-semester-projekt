@@ -88,64 +88,6 @@ builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddSingleton<MongoImageService>();
 builder.Services.AddSingleton<MongoVideoService>();
 
-builder.Services.AddDbContext<ApplicationDbContext> (options =>
-    options.UseSqlServer (builder.Configuration.GetConnectionString ("DefaultConnection")));
-
-builder.Services.AddIdentity<ApplicationUser, IdentityRole> (options =>
-{
-    options.Password.RequireDigit = false;
-    options.Password.RequiredLength = 6;
-})
-.AddEntityFrameworkStores<ApplicationDbContext> ()
-.AddDefaultTokenProviders ();
-
-if (string.IsNullOrWhiteSpace (jwtKey) || jwtKey.Length < 32)
-{
-    throw new InvalidOperationException ("JWT key is missing or too short (min 32 chars).");
-}
-
-builder.Services.AddAuthentication (options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer (options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = key,
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        RoleClaimType = ClaimTypes.Role
-    };
-});
-
-builder.Services.AddCors (options =>
-{
-    options.AddPolicy("DevCors", policy =>
-    {
-        policy.WithOrigins("https://localhost:5001") // frontend URL
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
-});
-
-builder.Services.AddScoped<ITokenService, TokenService> ();
-
-// Only required for when seeding below
-//builder.Services.AddScoped<DbSeeder> ();
-
-//hvorfor?
-//builder.Services.AddRazorPages ();
-builder.Services.AddServerSideBlazor ();
-
-builder.Services.AddControllers ();
-builder.Services.AddScoped<AssignmentService>();
-builder.Services.AddScoped<IStudentService, StudentService> ();
-builder.Services.AddSingleton<MongoAttachmentService>();
-
 var app = builder.Build();
 
 if (builder.Configuration.GetValue("SeedDatabase", false))
