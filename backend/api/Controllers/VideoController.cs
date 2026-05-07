@@ -6,9 +6,9 @@ namespace api.Controllers{
     [Route("api/[controller]")]
     [ApiController]
     public class VideoController : ControllerBase{
-        private readonly MongoVideoService _mongoVideoService;
+        private readonly IMongoVideoService _mongoVideoService;
 
-        public VideoController(MongoVideoService mongoVideoService){
+        public VideoController(IMongoVideoService mongoVideoService){
             _mongoVideoService = mongoVideoService;
         }
 
