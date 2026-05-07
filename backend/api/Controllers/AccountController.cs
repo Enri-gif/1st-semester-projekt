@@ -25,7 +25,7 @@ public class AccountController : ControllerBase
 
     [Authorize]
     [HttpGet("me")]
-    public IActionResult Me()
+    public IActionResult Me() 
     {
         var user = HttpContext.User;
         var name = user.Identity?.Name;
