@@ -90,6 +90,12 @@ builder.Services.AddSingleton<MongoVideoService>();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await db.Database.MigrateAsync();
+}
+
 if (builder.Configuration.GetValue("SeedDatabase", false))
 {
     using var scope = app.Services.CreateScope();
