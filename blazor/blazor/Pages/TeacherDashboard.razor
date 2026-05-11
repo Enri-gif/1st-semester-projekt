@@ -1,5 +1,6 @@
 @page "/teacher-dashboard"
-@attribute [Authorize(Roles = "Teacher")]
+@using Shared
+@attribute [Authorize(Roles = Roles.Teacher)]
 
 <h3>Lærer Dashboard</h3>
 
@@ -11,9 +12,13 @@
 
     <button class="btn btn-primary" @onclick="GoToCreateAssignmentSheet">Lav opgavesæt</button>
 
-    <button class="btn btn-primary" @onclick="GoToAssignmentSheetOverview">Opgavesæt oversigt</button>
+    <button class="btn btn-primary" @onclick="GoToAssignmentAssignmentSheetOverview">Opgave & Opgavesæt oversigt</button>
+
+    <button class="btn btn-primary" @onclick="GoToAssignmentSheetOverview">Se opgavesæt</button>
 
     <button class="btn btn-primary" @onclick="GoToEditAssignmentSheet">Ret opgavesæt</button>
+
+    <button class="btn btn-primary" @onclick="GoToFilterAssignments">Filtrér opgaver</button>
 
     <button class="btn btn-primary" @onclick="GoToUploadVideo">Upload video</button>
 
@@ -37,6 +42,10 @@
     {
         Navigation.NavigateTo("/create-assignment-sheet");
     }
+    private void GoToAssignmentAssignmentSheetOverview()
+    {
+        Navigation.NavigateTo("/assignment-assignment-sheet-overview");
+    }
     private void GoToAssignmentSheetOverview()
     {
         Navigation.NavigateTo("/assignment-sheet-overview");
@@ -52,6 +61,10 @@
     private void GoToGenerateDiagram()
     {
         Navigation.NavigateTo("/generate-diagram");
+    }
+    private void GoToFilterAssignments()
+    {
+        Navigation.NavigateTo("/filter-assignments");
     }
 
 }

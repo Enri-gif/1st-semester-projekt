@@ -1,7 +1,9 @@
 ﻿@page "/login"
 @inject HttpClient Http
 @inject IAuthService AuthService
+@inject NavigationManager NavManager
 @using Shared.Authorization
+@using blazor.Interfaces
 @using blazor.Services
 
 <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
@@ -25,13 +27,25 @@
             var result = await response.Content.ReadFromJsonAsync<LoginResult>();
             if (result != null)
             {
-                AuthService.SetToken(result.Token);
-                message = "Login successful!";
+                await AuthService.SetTokenAsync(result.Token);
+
+                var target = result.Role switch
+                {
+                    "Admin" => "/teacher-dashboard",
+                    "Teacher" => "/teacher-dashboard",
+                    "Student" => "/student-dashboard",
+                    _ => "/home"
+                };
+
+                message = $"Login lykkedes! Omdirigerer automatisk...";
+                StateHasChanged();
+
+                NavManager.NavigateTo(target);
             }
         }
         else
         {
-            message = "Login failed!";
+            message = "Login fejlede. Prøv igen.";
         }
     }
 }

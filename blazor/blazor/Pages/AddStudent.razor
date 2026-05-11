@@ -1,5 +1,8 @@
 @page "/add-student"
+@using Shared
+@attribute [Authorize(Roles = Roles.Teacher)]
 @inject HttpClient Http
+@inject NavigationManager Navigation
 
 <h3>Opret elev</h3>
 
@@ -58,6 +61,13 @@
         Opret elev
     </button>
 
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <div class="full-width alert @(isSuccess ? "alert-success" : "alert-danger")" role="alert">
+            @statusMessage
+        </div>
+    }
+
 </div>
 
 @code {
@@ -77,6 +87,9 @@
     private DateTime? BirthDate;
 
     private string SelectedClass = "";
+
+    private string statusMessage = "";
+    private bool isSuccess;
 
     private List<string> Classes = new()
     {
@@ -110,12 +123,39 @@ private async Task CreateStudent()
 
     if (response.IsSuccessStatusCode)
     {
-        Console.WriteLine("Elev oprettet!");
+        statusMessage = $"Elev '{FirstName} {LastName}' blev oprettet. Sender dig tilbage til dashboard...";
+        isSuccess = true;
+        ResetForm();
+        StateHasChanged();
+
+        await Task.Delay(1500);
+        Navigation.NavigateTo("/teacher-dashboard");
+        return;
     }
     else
     {
-        Console.WriteLine("Fejl ved oprettelse af elev.");
+        statusMessage = "Fejl ved oprettelse af elev. Prøv igen.";
+        isSuccess = false;
     }
+    StateHasChanged();
+}
+
+private void ResetForm()
+{
+    CustomerNumber = "";
+    CustomerId = "";
+    FirstName = "";
+    LastName = "";
+    EnrolledDate = null;
+    InactiveDate = null;
+    PauseDate = null;
+    Note = "";
+    Phone = "";
+    Email = "";
+    Address = "";
+    City = "";
+    BirthDate = null;
+    SelectedClass = "";
 }
 
 }

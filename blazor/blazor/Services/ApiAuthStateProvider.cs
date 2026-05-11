@@ -1,10 +1,15 @@
+using Shared.Contracts;
 using Microsoft.AspNetCore.Components.Authorization;
-using System.Security.Claims;
 using System.Net.Http.Json;
+using System.Security.Claims;
 
 public class ApiAuthStateProvider : AuthenticationStateProvider
 {
+    private static readonly AuthenticationState Anonymous =
+        new(new ClaimsPrincipal(new ClaimsIdentity()));
+
     private readonly HttpClient _http;
+    private AuthenticationState? _cached;
 
     public ApiAuthStateProvider(HttpClient http)
     {
@@ -13,28 +18,46 @@ public class ApiAuthStateProvider : AuthenticationStateProvider
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
+        if (_cached != null)
+        {
+            return _cached;
+        }
+
         try
         {
             var userInfo = await _http.GetFromJsonAsync<UserInfo>("api/account/me");
 
             if (userInfo == null)
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
-
-            var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, userInfo.Name)
-            };
+                _cached = Anonymous;
+                return _cached;
+            }
 
+            var claims = new List<Claim> { new Claim(ClaimTypes.Name, userInfo.Name) };
             claims.AddRange(userInfo.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
             var identity = new ClaimsIdentity(claims, "api");
-            var user = new ClaimsPrincipal(identity);
-
-            return new AuthenticationState(user);
+            _cached = new AuthenticationState(new ClaimsPrincipal(identity));
+            return _cached;
         }
         catch
         {
-            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            _cached = Anonymous;
+            return _cached;
         }
+    }
+
+    public async Task NotifyUserAuthenticatedAsync()
+    {
+        _cached = null;
+        var stateTask = GetAuthenticationStateAsync();
+        NotifyAuthenticationStateChanged(stateTask);
+        await stateTask;
+    }
+
+    public void NotifyUserSignedOut()
+    {
+        _cached = Anonymous;
+        NotifyAuthenticationStateChanged(Task.FromResult(Anonymous));
     }
 }

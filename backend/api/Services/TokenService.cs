@@ -1,17 +1,12 @@
-﻿using api.Data;
+using api.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
-using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using api.Interfaces;
 
-namespace Api.Services;
-
-public interface ITokenService
-{
-    Task<string> CreateToken(ApplicationUser user);
-}
+namespace api.Services;
 
 public class TokenService : ITokenService
 {
@@ -24,7 +19,7 @@ public class TokenService : ITokenService
         this.userManager = userManager;
     }
 
-    public async Task<string> CreateToken (ApplicationUser user)
+    public async Task<string> CreateToken(ApplicationUser user)
     {
         var claims = new List<Claim>
         {
@@ -39,15 +34,16 @@ public class TokenService : ITokenService
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
-        var key = new SymmetricSecurityKey (Encoding.UTF8.GetBytes (config["Jwt:Key"]!));
-        var creds = new SigningCredentials (key, SecurityAlgorithms.HmacSha256);
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]!));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var token = new JwtSecurityToken (
+        var token = new JwtSecurityToken(
             claims: claims,
-            expires: DateTime.UtcNow.AddHours (1),
+            expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: creds
         );
 
-        return new JwtSecurityTokenHandler ().WriteToken (token);
+        return new JwtSecurityTokenHandler().WriteToken(token);
+
     }
 }

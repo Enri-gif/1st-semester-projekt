@@ -1,101 +1,146 @@
 using api.Data;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using api.Services;
-using Api.Services;
+using api.Validators;
+using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using System.Security.Claims;
+using System.Text;
+using api.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddProblemDetails();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateStudentDTOValidator>();
 
-builder.Services.AddDbContext<ApplicationDbContext> (options =>
-    options.UseSqlServer (builder.Configuration.GetConnectionString ("DefaultConnection")));
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole> (options =>
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
     options.Password.RequiredLength = 6;
 })
-.AddEntityFrameworkStores<ApplicationDbContext> ()
-.AddDefaultTokenProviders ();
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
 
 var jwtKey = builder.Configuration["Jwt:Key"];
-if (string.IsNullOrWhiteSpace (jwtKey) || jwtKey.Length < 32)
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
 {
-    throw new InvalidOperationException ("JWT key is missing or too short (min 32 chars).");
+    throw new InvalidOperationException("JWT key is missing or too short (min 32 chars).");
 }
 
-var key = new SymmetricSecurityKey (Encoding.UTF8.GetBytes (jwtKey));
+var validateIssuer = builder.Configuration.GetValue("Jwt:ValidateIssuer", false);
+var validateAudience = builder.Configuration.GetValue("Jwt:ValidateAudience", false);
+var validIssuer = builder.Configuration["Jwt:Issuer"];
+var validAudience = builder.Configuration["Jwt:Audience"];
+var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
-builder.Services.AddAuthentication (options =>
+builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-.AddJwtBearer (options =>
+.AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = key,
-        ValidateIssuer = false,
-        ValidateAudience = false,
+        ValidateIssuer = validateIssuer,
+        ValidateAudience = validateAudience,
+        ValidIssuer = validIssuer,
+        ValidAudience = validAudience,
         RoleClaimType = ClaimTypes.Role
     };
 });
 
-builder.Services.AddCors (options =>
+builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
     {
-        policy.WithOrigins("https://localhost:5001") // frontend URL
+        policy.WithOrigins(
+                "http://localhost:5050",
+                "https://localhost:5051")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     });
 });
 
-builder.Services.AddScoped<ITokenService, TokenService> ();
-
-// Only required for when seeding below
-//builder.Services.AddScoped<DbSeeder> ();
-
-//hvorfor?
-//builder.Services.AddRazorPages ();
-builder.Services.AddServerSideBlazor ();
-
-builder.Services.AddControllers ();
-builder.Services.AddScoped<AssignmentService>();
-builder.Services.AddScoped<IStudentService, StudentService> ();
-builder.Services.AddSingleton<MongoAttachmentService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<DbSeeder>();
+builder.Services.AddServerSideBlazor();
+builder.Services.AddControllers();
+builder.Services.AddScoped<IAssignmentRepository, AssignmentRepository>();
+builder.Services.AddScoped<IAssignmentService, AssignmentService>();
+builder.Services.AddScoped<IAssignmentSheetRepository, AssignmentSheetRepository>();
+builder.Services.AddScoped<IAssignmentSheetService, AssignmentSheetService>();
+builder.Services.AddSingleton<SpreadsheetService>();
+builder.Services.AddSingleton<IAssignmentSheetPdfService, AssignmentSheetPdfService>();
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddSingleton<MongoImageService>();
+builder.Services.AddSingleton<MongoVideoService>();
 
 var app = builder.Build();
 
-// Enable to seed from DbSeeder-class
-//using (var scope = app.Services.CreateScope ())
-//{
-//    var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder> ();
-//    await seeder.SeedAsync ();
-//}
+if (builder.Configuration.GetValue("SeedDatabase", false))
+{
+    using var scope = app.Services.CreateScope();
+    var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder>();
+    var startupLogger = scope.ServiceProvider.GetRequiredService<ILogger<DbSeeder>>();
+    try
+    {
+        await seeder.SeedAsync();
+    }
+    catch (Exception ex)
+    {
+        // Don't hard-fail the API boot if the DB is unavailable (e.g. docker
+        // not started yet). Log and continue; endpoints that need the DB
+        // will surface a clearer error per request.
+        startupLogger.LogError(ex, "Database seeding failed; continuing startup without seed data.");
+    }
+}
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var feature = context.Features.Get<IExceptionHandlerFeature>();
+        var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("GlobalExceptionHandler");
+        logger.LogError(feature?.Error, "Unhandled exception for {Path}", context.Request.Path);
+
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status500InternalServerError,
+            Title = "An unexpected error occurred.",
+            Detail = app.Environment.IsDevelopment() ? feature?.Error.Message : null,
+            Instance = context.Request.Path
+        };
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/problem+json";
+        await context.Response.WriteAsJsonAsync(problem);
+    });
+});
+
 app.UseHttpsRedirection();
 app.UseRouting();
-app.UseCors();
+app.UseCors("DevCors");
 
-app.UseAuthentication ();
-app.UseAuthorization ();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

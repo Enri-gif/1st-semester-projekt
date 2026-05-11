@@ -1,98 +1,131 @@
 @page "/create-assignment-sheet"
+@using Shared.Contracts
+@using blazor.models
+@using Shared
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@attribute [Authorize(Roles = Roles.Teacher)]
 
 <h3>Lav opgavesæt</h3>
 
 <div class="container">
-
-    <!-- VENSTRE: ALLE OPGAVER -->
     <div class="box">
-        <h4>Opgaver</h4>
-
-        <input placeholder="Filter..." @bind="FilterText" class="form-control" />
-
-        @foreach (var assignment in FilteredAssignments)
-        {
-            <div class="item" @onclick="() => AddToSheet(assignment)">
-                @assignment.Title
-            </div>
-        }
-    </div>
-
-    <!-- PIL -->
-    <div class="arrow">
-        ➡
-    </div>
-
-    <!-- HØJRE: VALGTE OPGAVER -->
-    <div class="box">
-        <h4>Opgavesæt</h4>
-
-        @for (int i = 0; i < SelectedAssignments.Count; i++)
-        {
-            var assignment = SelectedAssignments[i];
-
-        <div class="item selected"
-            @onclick="() => RemoveFromSheet(assignment)">
-
-            <strong>@(i + 1).</strong> @assignment.Title
-
+        <div class="mb-2">
+            <label>Titel</label>
+            <input class="form-control" @bind="dto.Title" />
         </div>
-        }
 
-        <button class="btn btn-success" @onclick="SaveAssignmentSheet">
+        <div class="mb-2">
+            <label>Fag</label>
+            <input class="form-control" @bind="dto.Subject" />
+        </div>
+
+        <div class="mb-2">
+            <label>Niveau</label>
+            <input class="form-control" @bind="dto.Level" />
+        </div>
+
+        <div class="mb-2">
+            <label>År</label>
+            <input class="form-control" type="number" @bind="dto.Year" />
+        </div>
+
+        <div class="mb-2">
+            <label>Ejer</label>
+            <input class="form-control" @bind="dto.Owner" />
+        </div>
+
+        <div class="mb-2">
+            <label>Type</label>
+            <select class="form-control" @bind="dto.Type">
+                <option value="Hjemmeopgave">Hjemmeopgave</option>
+                <option value="Proeve">Prøve</option>
+            </select>
+        </div>
+
+        <div class="mb-2">
+            <label>Opgaver (vælg de opgaver der skal indgå)</label>
+            <input class="form-control" placeholder="Filter…" @bind="filter" @bind:event="oninput" />
+            <div class="assignment-picker" style="max-height:260px;overflow:auto;border:1px solid #ccc;padding:6px;">
+                @foreach (var a in FilteredAssignments)
+                {
+                    <label style="display:block;">
+                        <input type="checkbox"
+                               checked="@dto.AssignmentIds.Contains(a.Id)"
+                               @onchange="e => ToggleAssignment(a.Id, (bool)e.Value!)" />
+                        @a.Subject — @a.Topic (Opg. @a.Number, @a.Points p.)
+                    </label>
+                }
+            </div>
+            <small>@dto.AssignmentIds.Count valgt</small>
+        </div>
+
+        <button class="btn btn-success mt-2"
+                @onclick="SaveAssignmentSheet"
+                disabled="@string.IsNullOrWhiteSpace(dto.Title)">
             Gem opgavesæt
         </button>
-    </div>
 
+        @if (!string.IsNullOrWhiteSpace(status))
+        {
+            <p class="mt-2">@status</p>
+        }
+    </div>
 </div>
 
 @code {
+    private CreateAssignmentSheetDTO dto = new();
+    private List<Assignment> assignments = new();
+    private string filter = "";
+    private string status = "";
 
-    private List<Assignment> AllAssignments = new();
-    private List<Assignment> SelectedAssignments = new();
-
-    private string FilterText = "";
-
-    // Midlertidig mock data (indtil API er klar)
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        AllAssignments = new List<Assignment>
+        try
         {
-            new Assignment { Id = 1, Title = "Matematik - Algebra" },
-            new Assignment { Id = 2, Title = "Dansk - Analyse" },
-            new Assignment { Id = 3, Title = "Engelsk - Essay" },
-            new Assignment { Id = 4, Title = "Fysik - Energi" }
-        };
-    }
-
-    private IEnumerable<Assignment> FilteredAssignments =>
-        AllAssignments.Where(a =>
-            string.IsNullOrWhiteSpace(FilterText) ||
-            a.Title.Contains(FilterText, StringComparison.OrdinalIgnoreCase));
-
-    private void AddToSheet(Assignment assignment)
-    {
-        if (!SelectedAssignments.Contains(assignment))
+            var paged = await Http.GetFromJsonAsync<PagedResult<Assignment>>("api/assignment?pageSize=200");
+            assignments = paged?.Items ?? new();
+        }
+        catch (Exception ex)
         {
-            SelectedAssignments.Add(assignment);
+            status = $"Kunne ikke hente opgaver: {ex.Message}";
         }
     }
 
-    private void RemoveFromSheet(Assignment assignment)
+    private IEnumerable<Assignment> FilteredAssignments =>
+        string.IsNullOrWhiteSpace(filter)
+            ? assignments
+            : assignments.Where(a =>
+                (a.Subject?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (a.Topic?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    private void ToggleAssignment(Guid id, bool isChecked)
     {
-        SelectedAssignments.Remove(assignment);
+        if (isChecked)
+        {
+            if (!dto.AssignmentIds.Contains(id)) dto.AssignmentIds.Add(id);
+        }
+        else
+        {
+            dto.AssignmentIds.Remove(id);
+        }
     }
 
-    private void SaveAssignmentSheet()
+    private async Task SaveAssignmentSheet()
     {
-        // Her skal API kald komme senere
-        Console.WriteLine("Gemmer opgavesæt...");
-    }
+        var response = await Http.PostAsJsonAsync("api/assignmentsheet", dto);
 
-    public class Assignment
-    {
-        public int Id { get; set; }
-        public string Title { get; set; } = "";
+        if (response.IsSuccessStatusCode)
+        {
+            status = $"Opgavesæt '{dto.Title}' oprettet.";
+            dto = new CreateAssignmentSheetDTO();
+            await Task.Delay(1500);
+            Navigation.NavigateTo("/assignment-sheet-overview");
+        }
+        else
+        {
+            status = await response.Content.ReadAsStringAsync();
+        }
     }
-
 }

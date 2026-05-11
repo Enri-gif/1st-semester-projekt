@@ -1,7 +1,10 @@
 @page "/student-dashboard"
+@using Shared.Contracts
+@using Shared
 @using blazor.models
 @using Microsoft.AspNetCore.Components.Web
 @using System.Net.Http.Json
+@attribute [Authorize(Roles = Roles.Student)]
 @inject HttpClient Http
 
 <PageTitle>Student Dashboard</PageTitle>
@@ -49,14 +52,24 @@
     }
 </div>
 
-<div class="change-password-box">
-    <h3>Ændre adgangskode</h3>
+@if (showChangePassword)
+{
+    <div>
+        <div class="change-password-box">
+            <h3>Ændre adgangskode</h3>
 
-    <input type="password" placeholder="Ny adgangskode" />
-    <input type="password" placeholder="Gentag adgangskode" />
+            <input type="password" @bind="oldPassword" placeholder="Nuværende adgangskode" />
+            <input type="password" @bind="newPassword" placeholder="Ny adgangskode" />
 
-    <button class="save-password-button">Gem ændring</button>
-</div>
+            <button class="save-password-button" @onclick="Change_Password">Gem ændring</button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(passwordChangeError))
+        {
+            <p>@passwordChangeError</p>
+        }
+    </div>
+}
 
 @code {
     [Inject]
@@ -66,6 +79,11 @@
     private string searchText = string.Empty;
     private string currentSort = "date";
 
+    private bool showChangePassword = false; // To not show it briefly when navigating back to the student dashboard
+    private string oldPassword = "";
+    private string newPassword = "";
+    private string? passwordChangeError;
+
     private void GoToStatistics()
     {
         Navigation.NavigateTo("/statistik-elev");
@@ -74,14 +92,18 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadAssignmentsAsync();
+
+        showChangePassword = await Http.GetFromJsonAsync<bool>(
+            "api/account/password-firstchanged-status"
+        );
     }
 
     private async Task LoadAssignmentsAsync()
     {
         try
         {
-            assignments = await Http.GetFromJsonAsync<List<Assignment>>("http://localhost:5000/api/assignment")
-                          ?? new List<Assignment>();
+            var paged = await Http.GetFromJsonAsync<PagedResult<Assignment>>("api/assignment?pageSize=100");
+            assignments = paged?.Items ?? new List<Assignment>();
         }
         catch (Exception ex)
         {
@@ -116,4 +138,26 @@
     {
         currentSort = e.Value?.ToString() ?? "date";
     }
+
+    async Task Change_Password ()
+    {
+        passwordChangeError = null;
+
+        var response = await Http.PostAsJsonAsync("api/account/change-password", new
+        {
+            OldPassword = oldPassword,
+            NewPassword = newPassword
+        });
+
+        if (response.IsSuccessStatusCode)
+        {
+            showChangePassword = false;
+        }
+        else
+        {
+            var errors = await response.Content.ReadFromJsonAsync<string[]>();
+            passwordChangeError = errors?.FirstOrDefault() ?? "Password change failed";
+        }
+    }
+
 }

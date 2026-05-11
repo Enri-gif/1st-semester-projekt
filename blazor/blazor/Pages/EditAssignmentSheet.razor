@@ -1,0 +1,145 @@
+@page "/edit-assignment-sheet"
+@using Shared.Contracts
+@using Shared
+@using blazor.models
+@using System.Net.Http.Json
+@attribute [Authorize(Roles = Roles.Teacher)]
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<h1 class="title">Ret opgavesæt</h1>
+
+<div class="page-container">
+
+    <div class="top-controls">
+        <select @bind="selectedId">
+            <option value="">Vælg opgavesæt</option>
+            @foreach (var s in sheets)
+            {
+                <option value="@s.Id">@s.Title (@s.Subject, @s.Year)</option>
+            }
+        </select>
+
+        <button @onclick="Load" disabled="@(string.IsNullOrEmpty(selectedId))">Hent</button>
+    </div>
+
+    @if (form is not null)
+    {
+        <div class="opgaver-container">
+            <div class="opgave-block">
+                <div class="opgave-inputs">
+                    <h2>@form.Title</h2>
+
+                    <label>Karakter</label>
+                    <input type="text" @bind="form.Grade" placeholder="f.eks. 12" />
+
+                    <label>Tilbagemelding til elev</label>
+                    <textarea rows="4" @bind="form.Feedback"></textarea>
+
+                    <label>Rettenoter (intern)</label>
+                    <textarea rows="4" @bind="form.CorrectionNotes"></textarea>
+
+                    <button @onclick="Save">Gem rettelse</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(status))
+    {
+        <p>@status</p>
+    }
+</div>
+
+@code {
+    private List<AssignmentSheetSummary> sheets = new();
+    private string selectedId = "";
+    private CorrectionForm? form;
+    private string status = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            sheets = await Http.GetFromJsonAsync<List<AssignmentSheetSummary>>("api/assignmentsheet") ?? new();
+        }
+        catch (Exception ex)
+        {
+            status = $"Kunne ikke hente data: {ex.Message}";
+        }
+    }
+
+    private async Task Load()
+    {
+        if (string.IsNullOrEmpty(selectedId)) return;
+        try
+        {
+            var sheet = await Http.GetFromJsonAsync<AssignmentSheetSummary>($"api/assignmentsheet/{selectedId}");
+            if (sheet is null) { status = "Opgavesæt ikke fundet."; return; }
+
+            form = new CorrectionForm
+            {
+                Title = sheet.Title,
+                Subject = sheet.Subject,
+                Level = sheet.Level,
+                Year = sheet.Year,
+                Owner = sheet.Owner,
+                Type = sheet.Type,
+                Grade = sheet.Grade ?? "",
+                Feedback = sheet.Feedback ?? "",
+                CorrectionNotes = sheet.CorrectionNotes ?? ""
+            };
+            status = "";
+        }
+        catch (Exception ex)
+        {
+            status = $"Fejl: {ex.Message}";
+        }
+    }
+
+    private async Task Save()
+    {
+        if (form is null || string.IsNullOrEmpty(selectedId)) return;
+        var response = await Http.PutAsJsonAsync($"api/assignmentsheet/{selectedId}", form);
+        if (response.IsSuccessStatusCode)
+        {
+            status = $"Rettelse gemt for '{form.Title}'.";
+            await Task.Delay(800);
+            Navigation.NavigateTo("/assignment-sheet-overview");
+        }
+        else
+        {
+            status = $"Opdatering fejlede: {(int)response.StatusCode}";
+        }
+    }
+
+    public class AssignmentSheetSummary
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = "";
+        public string Subject { get; set; } = "";
+        public string Level { get; set; } = "";
+        public int Year { get; set; }
+        public string Owner { get; set; } = "";
+        public AssignmentSheetType Type { get; set; }
+        public string? Grade { get; set; }
+        public string? Feedback { get; set; }
+        public string? CorrectionNotes { get; set; }
+    }
+
+    // Server-side UpdateAssignmentSheetDTO carries metadata fields too; we
+    // simply preserve what we loaded for them and surface only the correction
+    // fields to the teacher.
+    public class CorrectionForm
+    {
+        public string Title { get; set; } = "";
+        public string Subject { get; set; } = "";
+        public string Level { get; set; } = "";
+        public int Year { get; set; } = DateTime.Today.Year;
+        public string Owner { get; set; } = "Prøvebank";
+        public AssignmentSheetType Type { get; set; } = AssignmentSheetType.Hjemmeopgave;
+        public string Grade { get; set; } = "";
+        public string Feedback { get; set; } = "";
+        public string CorrectionNotes { get; set; } = "";
+    }
+}

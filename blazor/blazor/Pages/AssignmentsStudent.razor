@@ -1,0 +1,158 @@
+@page "/assignments-student"
+@using Shared.Contracts
+@using Shared
+@using blazor.models
+@using System.Net.Http.Json
+@attribute [Authorize(Roles = Roles.Student)]
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<h1 class="title">Besvarelse</h1>
+
+@if (assignments.Count == 0)
+{
+    <p>Ingen opgaver fundet.</p>
+}
+
+<div class="container">
+    @foreach (var a in assignments)
+    {
+        var state = GetState(a.Id);
+        <div class="opgave-block">
+            <div class="opgave-header">
+                <span>@a.Subject — @a.Topic (Opgave @a.Number, max @a.Points p.)</span>
+            </div>
+
+            <div class="opgave-box">@a.Answer</div>
+
+            <div class="opgave-actions">
+                <input type="number"
+                       min="0"
+                       max="@a.Points"
+                       placeholder="Dine point"
+                       @bind="state.StudentPoints"
+                       disabled="@state.Revealed" />
+
+                <button @onclick="() => CheckEvaluation(a)"
+                        disabled="@(state.StudentPoints == null || state.Revealed)">
+                    @(state.Revealed ? "Vurdering vist" : "Se vurdering")
+                </button>
+
+                <button @onclick="() => ShowVideos(a)">
+                    Se video
+                </button>
+            </div>
+
+            @if (state.Revealed)
+            {
+                <div class="laerer-box">
+                    <div>Lærers vurdering</div>
+                    <input type="text" value="@state.TeacherEvaluation" disabled />
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(state.Message))
+            {
+                <div class="laerer-box"><em>@state.Message</em></div>
+            }
+
+            @if (state.VideoUrls?.Count > 0)
+            {
+                <div class="video-list">
+                    <strong>Videoer:</strong>
+                    @foreach (var url in state.VideoUrls)
+                    {
+                        <div>
+                            <a href="@url" target="_blank" rel="noopener">@url</a>
+                        </div>
+                    }
+                </div>
+            }
+            else if (state.VideoUrls != null && state.VideoUrls.Count == 0)
+            {
+                <div class="video-list"><em>Ingen videoer tilknyttet denne opgave.</em></div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<Assignment> assignments = new();
+    private readonly Dictionary<Guid, EvaluationState> states = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var paged = await Http.GetFromJsonAsync<PagedResult<Assignment>>("api/assignment?pageSize=50");
+            assignments = paged?.Items ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load assignments: {ex.Message}");
+        }
+    }
+
+    private EvaluationState GetState(Guid id)
+    {
+        if (!states.TryGetValue(id, out var s))
+        {
+            s = new EvaluationState();
+            states[id] = s;
+        }
+        return s;
+    }
+
+    private async Task CheckEvaluation(Assignment a)
+    {
+        var state = GetState(a.Id);
+        if (state.StudentPoints is null) return;
+
+        var response = await Http.GetAsync(
+            $"api/studentevaluation/{a.Id}?studentPoints={state.StudentPoints}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var payload = await response.Content.ReadFromJsonAsync<TeacherEvaluationResponse>();
+            state.TeacherEvaluation = payload?.TeacherEvaluation ?? "(ingen kommentar)";
+            state.Revealed = true;
+            state.Message = "";
+        }
+        else if ((int)response.StatusCode == 403)
+        {
+            state.Message = "Du er ikke tæt nok på lærerens vurdering til at se den.";
+        }
+        else
+        {
+            state.Message = $"Fejl: {(int)response.StatusCode}";
+        }
+    }
+
+    private async Task ShowVideos(Assignment a)
+    {
+        var state = GetState(a.Id);
+        try
+        {
+            var urls = await Http.GetFromJsonAsync<List<string>>($"api/video/assignment/{a.Id}");
+            state.VideoUrls = urls ?? new List<string>();
+        }
+        catch (Exception ex)
+        {
+            state.VideoUrls = new List<string>();
+            Console.WriteLine($"Failed to load videos for assignment {a.Id}: {ex.Message}");
+        }
+    }
+
+    private class EvaluationState
+    {
+        public int? StudentPoints { get; set; }
+        public bool Revealed { get; set; }
+        public string TeacherEvaluation { get; set; } = "";
+        public string Message { get; set; } = "";
+        public List<string>? VideoUrls { get; set; }
+    }
+
+    private class TeacherEvaluationResponse
+    {
+        public string TeacherEvaluation { get; set; } = "";
+    }
+}

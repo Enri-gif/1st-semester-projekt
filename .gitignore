@@ -7,6 +7,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/Dotnet.gitignore
 
+# Local secrets — commit `.env.example` instead
+.env
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -62,4 +65,4 @@ nunit-*.xml
 
 # These are user-specific project settings and session-specific IDE stuff from VS
 *.user
-*.suo
+*.suo.nuget-build.config

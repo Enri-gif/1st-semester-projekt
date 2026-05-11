@@ -19,4 +19,9 @@ public class Assignment
     public int Number { get; set; } = 0;
     public int Points { get; set; } = 0;
     public List<string> Tags { get; set; } = new List<string>();
+    public Guid? AssignmentSheetId { get; set; }
+    public string TeacherEvaluation { get; set; } = "";
+
+    [Timestamp]
+    public byte[]? RowVersion { get; set; }
 }

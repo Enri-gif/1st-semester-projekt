@@ -1,21 +1,33 @@
+using api.Data;
+using api.DTOs;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Identity;
-using api.Data;
-using Microsoft.AspNetCore.Cors;
+
+namespace api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 [EnableCors("DevCors")]
 public class AccountController : ControllerBase
 {
+    private readonly ILogger<AccountController> logger;
+    private readonly UserManager<ApplicationUser> userManager;
+
+    public AccountController(ILogger<AccountController> logger, UserManager<ApplicationUser> userManager)
+    {
+        this.logger = logger;
+        this.userManager = userManager;
+    }
+
     [Authorize]
     [HttpGet("me")]
-    public IActionResult Me()
+    public IActionResult Me() 
     {
         var user = HttpContext.User;
-
         var name = user.Identity?.Name;
 
         var roles = user.Claims
@@ -23,9 +35,12 @@ public class AccountController : ControllerBase
             .Select(c => c.Value)
             .ToList();
 
-        foreach (var claim in user.Claims)
+        if (logger.IsEnabled(LogLevel.Debug))
         {
-            Console.WriteLine($"{user.Identity?.Name} ||||||| {claim}");
+            foreach (var claim in user.Claims)
+            {
+                logger.LogDebug("{UserName} claim: {ClaimType}={ClaimValue}", name, claim.Type, claim.Value);
+            }
         }
 
         return Ok(new
@@ -35,18 +50,53 @@ public class AccountController : ControllerBase
         });
     }
 
-    [HttpPost("login-test")]
-    public async Task<IActionResult> LoginTest([FromServices] SignInManager<ApplicationUser> signInManager)
+    [HttpPost ("change-password")]
+    public async Task<IActionResult> ChangePassword ([FromBody] ChangePasswordDTO dto)
     {
-        var user = await signInManager.UserManager.FindByNameAsync("teacher");
+        if (dto == null)
+            return BadRequest ();
+
+        var user = await userManager.GetUserAsync (User);
+        if (user == null)
+        {
+            return Unauthorized ();
+        }
+
+        var result = await userManager.ChangePasswordAsync (
+            user,
+            dto.OldPassword,
+            dto.NewPassword
+        );
+
+        user.HasChangedPasswordFirstTime = true;
+        await userManager.UpdateAsync (user);
+
+        if (!result.Succeeded)
+        {
+            return BadRequest (result.Errors.Select (e => e.Description));
+        }
+
+        return Ok ();
+    }
+
+    [HttpGet ("password-firstchanged-status")]
+    public async Task<IActionResult> GetPasswordStatus ()
+    {
+        var user = await userManager.GetUserAsync (User);
 
         if (user == null)
         {
-            return NotFound("User not found");
+            return Unauthorized ();
         }
 
-        await signInManager.SignInAsync(user, isPersistent: true);
+        return Ok (!user.HasChangedPasswordFirstTime);
+    }
 
-            return Ok();
+    [HttpPost ("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout ()
+    {
+        await HttpContext.SignOutAsync ();
+        return Ok ();
     }
 }
