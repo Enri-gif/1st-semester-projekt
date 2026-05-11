@@ -6,6 +6,7 @@ using FluentAssertions;
 using api.Data;
 using api.Models;
 using api.Services;
+using api.Interfaces;
 
 namespace Tests.ServiceTests;
 
