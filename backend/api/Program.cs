@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
 using api.Interfaces;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -140,6 +141,9 @@ app.UseExceptionHandler(errorApp =>
         await context.Response.WriteAsJsonAsync(problem);
     });
 });
+
+app.UseHttpMetrics ();
+app.MapMetrics ();
 
 app.UseHttpsRedirection();
 app.UseRouting();

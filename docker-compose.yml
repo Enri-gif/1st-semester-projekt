@@ -84,7 +84,61 @@ services:
     ports:
       - "5050:80"
 
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USERNAME}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+    depends_on:
+      - prometheus
+      - loki
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/loki
+
+  promtail:
+      image: grafana/promtail:2.9.0
+      command: -config.file=/etc/promtail/config.yml
+      volumes:
+        - ./promtail-config.yml:/etc/promtail/config.yml
+        - /var/lib/docker/containers:/var/lib/docker/containers:ro
+        - /var/run/docker.sock:/var/run/docker.sock
+      depends_on:
+        - loki
+
+  # promtail:
+  #   image: grafana/promtail:latest
+  #   volumes:
+  #     - /var/lib/docker/containers:/var/lib/docker/containers:ro
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - ./promtail/config.yml:/etc/promtail/config.yml
+  #   depends_on:
+  #     - loki
+  #   ports:
+  #     - "9080:9080"
+
 
 volumes:
   sql-data:
   mongo-data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
