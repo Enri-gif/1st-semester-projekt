@@ -1,10 +1,11 @@
+using api.Interfaces;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 
 namespace api.Services;
 
-public class MongoVideoService{
+public class MongoVideoService : IMongoVideoService {
     private readonly IMongoDatabase _database;
     private readonly GridFSBucket _gridFS;
     private readonly string _apiBaseUrl;
