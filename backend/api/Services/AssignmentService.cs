@@ -10,13 +10,13 @@ namespace api.Services;
 public class AssignmentService : IAssignmentService
 {
     private readonly IAssignmentRepository _repo;
-    private readonly MongoImageService _mongoImageService;
-    private readonly MongoVideoService _mongoVideoService;
+    private readonly IMongoImageService _mongoImageService;
+    private readonly IMongoVideoService _mongoVideoService;
 
     public AssignmentService(
         IAssignmentRepository repo,
-        MongoVideoService mongoVideoService,
-        MongoImageService mongoImageService)
+        IMongoVideoService mongoVideoService,
+        IMongoImageService mongoImageService)
     {
         _repo = repo;
         _mongoImageService = mongoImageService;

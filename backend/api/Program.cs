@@ -87,7 +87,9 @@ builder.Services.AddSingleton<IAssignmentSheetPdfService, AssignmentSheetPdfServ
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddSingleton<MongoImageService>();
+builder.Services.AddSingleton<IMongoImageService>(sp => sp.GetRequiredService<MongoImageService>());
 builder.Services.AddSingleton<MongoVideoService>();
+builder.Services.AddSingleton<IMongoVideoService>(sp => sp.GetRequiredService<MongoVideoService>());
 
 var app = builder.Build();
 
